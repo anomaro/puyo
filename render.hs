@@ -108,10 +108,11 @@ render_yokoku gs state  =  do
     f p o   = render_fieldObject' gs trt p 0 0 1 1 0 o
 
 -- 予告ぷよの表示する種類を決める。
-yokokuKinds'    :: T.NumOfPuyo -> V.GameState -> [IO()]
+yokokuKinds'    :: T.NumOfPuyo -> V.GameState -> [GameObject]
 yokokuKinds' n gs   = yokokuKinds n 0 gs []
   where
-    yokokuKinds :: T.NumOfPuyo -> T.PositionX -> V.GameState -> [IO()] -> [IO()]
+    yokokuKinds :: T.NumOfPuyo -> T.PositionX -> V.GameState -> [GameObject]
+                -> [GameObject]
     yokokuKinds 0 x gs objs = objs
     yokokuKinds n x gs objs
      | x == fieldSizeX     = objs
@@ -303,7 +304,7 @@ neighborSameColorPuyo p c state =  do
 --------------------------------------------------------------------------------
 -- フィールドのぷよの描画。（色ぷよ・おじゃまぷよ）
 render_fieldPuyo    :: V.GameState -> T.Territory -> T.AnimationType 
-                    -> T.AreaPosition -> IO() -> IO()
+                    -> T.AreaPosition -> GameObject -> IO()
 render_fieldPuyo gs trt (T.Landing t pow) pos@(y, _) obj   =
     render_fieldObject' gs trt pos 0 moveY scaleX scaleY 0 obj
   where
@@ -337,15 +338,15 @@ render_fieldPuyo gs trt _               p obj =
     render_fieldObject gs trt p obj
 
 -- フィールド座標とオブジェクトを指定して、その位置に描画する。
-render_fieldObject  ::  V.GameState -> T.Territory -> T.AreaPosition -> IO() 
-                        -> IO()
+render_fieldObject  :: V.GameState -> T.Territory -> T.AreaPosition
+                    -> GameObject -> IO()
 render_fieldObject gs trt p obj = render_fieldObject' gs trt p 0 0 1 1 0 obj
 
 
 render_fieldObject' :: V.GameState -> T.Territory -> T.AreaPosition ->
                         GLUT.GLdouble -> GLUT.GLdouble ->
                         GLUT.GLdouble -> GLUT.GLdouble ->
-                        GLUT.GLdouble -> IO () -> IO()
+                        GLUT.GLdouble -> GameObject -> IO()
 render_fieldObject' gs trt (y, x) mx my sx sy r obj = do
     let (y', x') = (fromIntegral y, fromIntegral x)
         posY = field_pointY     gs - (unitAreaY gs * (y' - 1) ) * 2

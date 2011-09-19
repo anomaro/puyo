@@ -1,6 +1,8 @@
 -- renderObject.hs
 module RenderObject
     (
+    GameObject,
+    
     unitAreaY',
     unitAreaX',
     
@@ -22,14 +24,15 @@ module RenderObject
     )
     where
 
-
-
 import qualified Graphics.UI.GLUT   as GLUT
 
 import qualified Typedata   as T
 import qualified World      as W (window_sizeY, window_sizeX)
 
-
+--------------------------------------------------------------------------------
+--  型
+--------------------------------------------------------------------------------
+type GameObject = IO()
 
 --------------------------------------------------------------------------------
 --  基本描画設定
@@ -46,13 +49,13 @@ aspect_ratio    =  (fromIntegral W.window_sizeX) / (fromIntegral W.window_sizeY)
 --  オブジェクト描画    
 --------------------------------------------------------------------------------
 -- ゲームオブジェクトを描画する。
-render_gameobject :: GLUT.Vector3 Double -> IO() -> IO()
+render_gameobject :: GLUT.Vector3 Double -> GameObject -> IO()
 render_gameobject vec3 obj  = render_gameobject' vec3 1 1 0 obj
 
 -- ゲームオブジェクトを描画（拡大縮小・回転対応。回転は度を単位とした数値を入れる。）
 render_gameobject' :: GLUT.Vector3 Double 
                         -> GLUT.GLdouble -> GLUT.GLdouble -> GLUT.GLdouble 
-                        -> IO () -> IO()
+                        -> GameObject -> IO()
 render_gameobject' (GLUT.Vector3 x y z) sx sy r obj
     = GLUT.preservingMatrix $ do
         GLUT.translate (GLUT.Vector3 x y z :: GLUT.Vector3 Double)
@@ -65,10 +68,8 @@ render_gameobject' (GLUT.Vector3 x y z) sx sy r obj
 --------------------------------------------------------------------------------
 myVertex    = GLUT.vertex :: GLUT.Vertex3 GLUT.GLdouble -> IO()
 
---type GameObject = IO()
-
 -- 操作ぷよ背景
-objControlPuyoBack  :: IO ()
+objControlPuyoBack  :: GameObject
 objControlPuyoBack  =  do
     GLUT.color (GLUT.Color3 1.0 1.0 1.0 :: GLUT.Color3 Double)
     GLUT.renderPrimitive GLUT.Polygon
@@ -76,7 +77,7 @@ objControlPuyoBack  =  do
             $ shape_circle (unitAreaX' * 1.0) (unitAreaY' * 1.0) 0 0 0 12
 
 -- おじゃまぷよ
-objOjamaPuyo    :: IO ()
+objOjamaPuyo    :: GameObject
 objOjamaPuyo    =  do
     GLUT.lineWidth GLUT.$= 3.0
     GLUT.color (GLUT.Color3 0.5 0.5 0.5 :: GLUT.Color3 Double)
@@ -85,7 +86,7 @@ objOjamaPuyo    =  do
             $ shape_circle (unitAreaX' * 0.9) (unitAreaY' * 0.9) 0 0 0 12
 
 -- ぷよ
-objPuyo             :: T.Color -> IO ()
+objPuyo             :: T.Color -> GameObject
 objPuyo color       =  do
     GLUT.color $ to_glutColor3 color        -- 色を変える。
     GLUT.renderPrimitive GLUT.Polygon
@@ -93,7 +94,7 @@ objPuyo color       =  do
             $ shape_circle (unitAreaX' * 0.93) (unitAreaY' * 0.93) 0 0 0 12
 
 -- ぷよ（フィールド上）
-objPuyo'            :: T.Color -> [T.Direction] -> IO ()
+objPuyo'            :: T.Color -> [T.Direction] -> GameObject
 objPuyo' color ds   =  do
     GLUT.color $ to_glutColor3 color        -- 色を変える。
     GLUT.renderPrimitive GLUT.Polygon
@@ -102,7 +103,7 @@ objPuyo' color ds   =  do
     mapM_ linkPuyo ds
   where
     -- ぷよの繋がり
-    linkPuyo    :: T.Direction -> IO ()
+    linkPuyo    :: T.Direction -> GameObject
     linkPuyo T.DUp      =
         GLUT.renderPrimitive GLUT.Quads $ do 
             myVertex $ GLUT.Vertex3 (unitAreaX'  / sqrt 2 * 0.9) unitAreaY' 0
@@ -130,7 +131,7 @@ objPuyo' color ds   =  do
 
 
 -- フィールド背景
-objBackfield    :: IO ()
+objBackfield    :: GameObject
 objBackfield    =  do
     GLUT.color (GLUT.Color3 0.125 0.125 0.125 :: GLUT.Color3 Double)
     GLUT.renderPrimitive GLUT.Quads $ do
@@ -142,7 +143,7 @@ objBackfield    =  do
     size = 0.93
 
 -- 落下予測地点
-objFallPoint    :: T.Color -> IO ()
+objFallPoint    :: T.Color -> GameObject
 objFallPoint color   =  do
     GLUT.color $ to_glutColor3 color        -- 色を変える。
     GLUT.renderPrimitive GLUT.Quads $ do
@@ -154,7 +155,7 @@ objFallPoint color   =  do
     size = 0.2
     
 -- 予告ぷよ
-objYokokuLv1    :: IO()
+objYokokuLv1    :: GameObject
 objYokokuLv1    =  do
     GLUT.lineWidth GLUT.$= 2.0
     GLUT.color (GLUT.Color3 0.5 0.5 0.5 :: GLUT.Color3 Double)
@@ -166,7 +167,7 @@ objYokokuLv1    =  do
     sizeX       = unitAreaX' * 0.5
     sizeY       = unitAreaY' * 0.4
             
-objYokokuLv2    :: IO()     -- おじゃまぷよと同じ。
+objYokokuLv2    :: GameObject     -- おじゃまぷよと同じ。
 objYokokuLv2    =  do
     GLUT.lineWidth GLUT.$= 3.0
     GLUT.color (GLUT.Color3 0.5 0.5 0.5 :: GLUT.Color3 Double)
@@ -174,14 +175,14 @@ objYokokuLv2    =  do
         $ mapM_ GLUT.vertex 
             $ shape_circle (unitAreaX' * 0.9) (unitAreaY' * 0.9) 0 0 0 12
 
-objYokokuLv3    :: IO()
+objYokokuLv3    :: GameObject
 objYokokuLv3    =  do
     GLUT.color (GLUT.Color3 0.5 0.5 0.5 :: GLUT.Color3 Double)
     GLUT.renderPrimitive GLUT.Polygon
         $ mapM_ GLUT.vertex 
             $ shape_circle (unitAreaX' * 0.9) (unitAreaY' * 0.9) 0 0 0 12
 
-objYokokuLv4    :: IO()
+objYokokuLv4    :: GameObject
 objYokokuLv4    =  do
     GLUT.color (GLUT.Color3 1.0 1.0 0.0 :: GLUT.Color3 Double)
     GLUT.renderPrimitive GLUT.Polygon   $ mapM_ GLUT.vertex star0
@@ -203,7 +204,7 @@ objYokokuLv4    =  do
     star4   = (\[a,b,c,d,e,f,g,h,i,j] -> [h,i,j]) star
     star5   = (\[a,b,c,d,e,f,g,h,i,j] -> [j,a,b]) star
     
-objYokokuLv5    :: IO()
+objYokokuLv5    :: GameObject
 objYokokuLv5    =  do
     GLUT.color (GLUT.Color3 1.0 1.0 0.0 :: GLUT.Color3 Double)
     GLUT.renderPrimitive GLUT.Polygon $ mapM_ GLUT.vertex large
@@ -215,7 +216,7 @@ objYokokuLv5    =  do
     pY   = unitAreaY' / 2
     pX   = unitAreaX' / 2
     
-objYokokuLv6   :: IO()
+objYokokuLv6   :: GameObject
 objYokokuLv6   =  do
     GLUT.color (GLUT.Color3 1.0 1.0 0.0 :: GLUT.Color3 Double)
     GLUT.renderPrimitive GLUT.Quads     base
