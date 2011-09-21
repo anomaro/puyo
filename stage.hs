@@ -27,8 +27,9 @@ createGameStage gs  =  do
     stateN1P        <- Q.create_nextPuyoState gs
     stateN2P        <- Q.copy_nextPuyoState stateN1P
     stateY          <- Q.create_yokokuState
-    plyaerstate1P   <- Q.create_playerstate W.defaultUser1P gs stateN1P stateY
-    plyaerstate2P   <- Q.create_playerstate W.defaultUser2P gs stateN2P stateY
+    stateL          <- Q.create_loseFlagState
+    plyaerstate1P   <- Q.create_playerstate W.defaultUser1P gs stateN1P stateY stateL
+    plyaerstate2P   <- Q.create_playerstate W.defaultUser2P gs stateN2P stateY stateL
     return $ Game Puyopuyo gs (plyaerstate1P, plyaerstate2P)
 
 createConfigurationStage    :: V.GameState -> IO GameStage

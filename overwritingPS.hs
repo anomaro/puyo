@@ -21,10 +21,12 @@ module OverwritingPS
     calculateScoreD,
     
     -- —\‚Õ‚æXV
---    add_yokoku,
     renewYokoku,
     toSupplyYokoku,
     toAdvanceYokoku,
+    
+    -- ”s–kƒtƒ‰ƒOXV
+    renewLoseFlag,
     )
     where
 
@@ -55,6 +57,19 @@ shift_gamePhase state gamephase =
 eat_nextPuyo    :: PlayerState -> T.NumOfPuyo -> IO()
 eat_nextPuyo state n =
     flip IORF.modifyIORef (drop n) =<< takeout_nextPuyoState state
+    
+--------------------------------------------------------------------------------
+--  ”s–kƒtƒ‰ƒOXV
+--------------------------------------------------------------------------------
+-- ”s–kƒtƒ‰ƒO‚ðXV‚·‚éB
+renewLoseFlag               :: Bool -> T.Territory -> PlayerState -> IO()
+renewLoseFlag b trt state   =  do
+    loseFlag    <- IORF.readIORef refLoseFlag
+    IORF.writeIORef refLoseFlag $ applyTRT trt (const b) loseFlag
+  where
+    applyTRT T.TerritoryLeft  f (l, r)  = (f l, r  )
+    applyTRT T.TerritoryRight f (l, r)  = (l  , f r)
+    refLoseFlag = takeout_loseFlagState state
 
 --------------------------------------------------------------------------------
 --  —\‚Õ‚æXV

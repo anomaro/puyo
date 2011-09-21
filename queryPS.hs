@@ -29,11 +29,15 @@ module QueryPS
     get_fallOjamaPuyo,
     get_yokoku,
     
+    -- 敗北フラグ取得
+    get_loseFlag,
+    
     -- 状態生成
     create_playerstate,
     create_nextPuyoState,
     copy_nextPuyoState,
     create_yokokuState,
+    create_loseFlagState,
     )
     where
 
@@ -72,6 +76,18 @@ get_gamePhase   =  IORF.readIORef <=< P'.takeout_gamePhaseState
 -- ネクストぷよの色を伝える。
 get_nextPuyoColors  :: P'.PlayerState -> IO [T.Color]
 get_nextPuyoColors  =  IORF.readIORef <=< P'.takeout_nextPuyoState
+
+--------------------------------------------------------------------------------
+--  敗北フラグ
+--------------------------------------------------------------------------------
+-- プレイヤーが敗北しているかどうか調べる。（敗北している場合はTrueを得る）
+get_loseFlag            :: T.Territory -> P'.PlayerState -> IO Bool
+get_loseFlag trt state  =  do
+    loseFlag    <- IORF.readIORef $ P'.takeout_loseFlagState state
+    return $ (f trt) loseFlag
+  where
+    f T.TerritoryLeft   = fst
+    f T.TerritoryRight  = snd
 
 --------------------------------------------------------------------------------
 --  予告ぷよ
@@ -164,13 +180,14 @@ getPPFlagQuickTurn  (P'.PlayerPuyoInfo _ _ _ _ _ q)    = q :: Bool
 --  プレイヤー状態初期化
 --------------------------------------------------------------------------------
 create_playerstate      :: T.PlayerIdentity -> V.GameState -> P'.NextPuyoState
-                        -> P'.YokokuState -> IO P'.PlayerState
-create_playerstate pI gs stateN stateY    =  do
+                        -> P'.YokokuState -> P'.LoseFlagState
+                        -> IO P'.PlayerState
+create_playerstate pI gs stateN stateY stateL   =  do
     stateG  <- create_gamePhaseState
     stateF  <- create_fieldstate
     stateP  <- create_ppuyostate
     stateS  <- create_scorestate
-    return $ P'.PlayerState pI stateG stateF stateP stateN stateS stateY
+    return $ P'.PlayerState pI stateG stateF stateP stateN stateS stateY stateL
   where
     -- 得点の初期状態
     create_scorestate   =  IORF.newIORef initalScore
@@ -214,7 +231,7 @@ create_playerstate pI gs stateN stateY    =  do
              | otherwise                        = []
 
 
----- ネクストぷよを初期化。
+-- ネクストぷよを初期化。
 create_nextPuyoState        :: V.GameState -> IO P'.NextPuyoState
 create_nextPuyoState  gs    =  do
     seed    <- U.runRandom maxBound
@@ -222,11 +239,15 @@ create_nextPuyoState  gs    =  do
     IORF.newIORef 
         $ map (V.makeColor colors) $ U.makeRandoms (V.get V.Color gs - 1) seed
         
----- ネクストぷよをコピーする。（２Ｐ側のネクストぷよ状態を作るときに使う。）
+-- ネクストぷよをコピーする。（２Ｐ側のネクストぷよ状態を作るときに使う。）
 copy_nextPuyoState :: P'.NextPuyoState -> IO P'.NextPuyoState
 copy_nextPuyoState =  IORF.newIORef <=< IORF.readIORef  
 
 
----- 予告ぷよを初期化。
+-- 予告ぷよを初期化。
 create_yokokuState :: IO P'.YokokuState
 create_yokokuState =  IORF.newIORef P'.defaultYokokuField
+
+-- 敗北フラグを初期化。
+create_loseFlagState    :: IO P'.LoseFlagState
+create_loseFlagState    =  IORF.newIORef (False, False)
