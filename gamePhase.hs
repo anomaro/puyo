@@ -24,6 +24,7 @@ import QueryPS (
     get_gamePhase,
     get_PlayerPuyoExistent,
     get_yokoku,
+    get_loseFlag,
     )
 import OverwritingPS   (
     shift_gamePhase,
@@ -38,7 +39,7 @@ convert_gamePhase state stateB gs =
     get_gamePhase state 
     >>= \gamePhase  -> (convert_gamePhase' gamePhase) state
   where
-    convert_gamePhase' :: T.GamePhase -> ( PlayerState -> IO() )
+    convert_gamePhase' :: T.GamePhase -> PlayerState -> IO()
     convert_gamePhase' T.BuildPhase             = build_playerPuyo  gs
     convert_gamePhase' T.ControlPhase           = control_playerPuyo stateB gs
     convert_gamePhase' T.DropPhase              = drop_fieldPuyo    gs
@@ -46,9 +47,19 @@ convert_gamePhase state stateB gs =
     convert_gamePhase' T.ErasePhase'            = erase_fieldPuyo'  gs
     convert_gamePhase' T.FallPhase              = fall_ojamaPuyo    gs
     convert_gamePhase' T.FallPhase'             = fall_ojamaPuyo'   gs
+    convert_gamePhase' T.GameOverPhase          = gameover          gs
     convert_gamePhase' (T.AnimationPhase t g)   = animation t g
 
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--  ゲーム終了判定 （ゲーム終了ならTrue）
+--------------------------------------------------------------------------------
+check_gameEnd       :: PlayerState -> IO Bool
+check_gameEnd state =  do
+    flagL   <- get_loseFlag T.TerritoryLeft  state
+    flagR   <- get_loseFlag T.TerritoryRight state
+    return $ flagL && flagR
+
 --------------------------------------------------------------------------------
 --  AnimationPhase Time GamePhase   アニメーション硬直
 --------------------------------------------------------------------------------
@@ -62,18 +73,24 @@ animation time nextPhase state
 --------------------------------------------------------------------------------
 build_playerPuyo            :: V.GameState -> PlayerState -> IO()
 build_playerPuyo gs state   =  do
-    B.build_playerPuyo gs state
-    shift_gamePhase state T.ControlPhase
+    loseFlag    <- B.checkLose gs state
+    if loseFlag
+      then shift_gamePhase state T.GameOverPhase
+      else B.build_playerPuyo gs state >> shift_gamePhase state T.ControlPhase
     
 --------------------------------------------------------------------------------
 --  ContralPhase    操作ぷよの更新
 --------------------------------------------------------------------------------
 control_playerPuyo :: I.ButtonState -> V.GameState -> PlayerState -> IO()
 control_playerPuyo stateB gs state = do
-    listB <- I.read_buttonState stateB
-    case snd $ get_playerIdentity state
-      of T.User     -> control_playerPuyo' listB            gs state
-         T.Com name -> control_playerPuyo' I.testButtonList gs state
+    flagGameEnd <- check_gameEnd state
+    if flagGameEnd
+      then shift_gamePhase state T.GameOverPhase
+      else do
+        listB <- I.read_buttonState stateB
+        case snd $ get_playerIdentity state
+          of T.User     -> control_playerPuyo' listB            gs state
+             T.Com name -> control_playerPuyo' I.testButtonList gs state
 
 control_playerPuyo' :: [I.Button] -> V.GameState -> PlayerState -> IO()
 control_playerPuyo' listB gs state = do
@@ -178,8 +195,8 @@ fall_ojamaPuyo' gs state =  do
     nextPhase   = T.AnimationPhase W.amimeTime_land T.BuildPhase
     
 --------------------------------------------------------------------------------
---  GameoverPhase   ゲームオーバーの判定
+--  GameoverPhase   ゲームオーバー時処理
 --------------------------------------------------------------------------------
-gameoverCheck           :: V.GameState -> PlayerState -> IO()
-gameoverCheck gs state  =  do
+gameover            :: V.GameState -> PlayerState -> IO()
+gameover gs state   =  do
     return ()

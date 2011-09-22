@@ -2,6 +2,7 @@
 module BuildPhase
     (
     build_playerPuyo,
+    checkLose,
     )
     where
 
@@ -12,6 +13,7 @@ import QueryPS (
     get_nextPuyoColors,
     get_PlayerPuyoExistent,
     get_playerIdentity,
+    get_fieldStateArea,
     )
 import OverwritingPS   (
     eat_nextPuyo,
@@ -19,14 +21,15 @@ import OverwritingPS   (
     renewScoreCalculation,
     toSupplyYokoku,
     toAdvanceYokoku,
+    renewLoseFlag,
     )
 
 import qualified Typedata   as T (Color, Direction(DUp), AreaPosition)
-import qualified Utility    as U (neighbor_area, againstTerritory)
+import qualified Utility    as U (neighbor_area, againstTerritory, isPuyo)
 import qualified Variable   as V 
 
 --------------------------------------------------------------------------------
--- ‘€ì‚Õ‚æ‚ð¶¬
+--  ‘€ì‚Õ‚æ‚ð¶¬
 --------------------------------------------------------------------------------
 build_playerPuyo        :: V.GameState -> P.PlayerState -> IO()
 build_playerPuyo gs state   =  do
@@ -50,3 +53,15 @@ pick_nextPuyoColor state    = do
     let [cb, cm]  = take 2 colors
     eat_nextPuyo state 2
     return (cb, cm)
+
+--------------------------------------------------------------------------------
+--  ”s–k”»’è
+--------------------------------------------------------------------------------
+-- ”s–k”»’è i”s–k‚µ‚Ä‚¢‚½‚çA”s–kðŒ‚ð‘‚«Š·‚¦True‚ð•Ô‚·Bj
+checkLose           :: V.GameState -> P.PlayerState -> IO Bool
+checkLose gs state  =  do
+    area <- get_fieldStateArea (V.criticalArea gs) state
+    when (U.isPuyo area) $ renewLoseFlag True trt state
+    return $ U.isPuyo area
+  where
+    trt     = fst $ get_playerIdentity state
