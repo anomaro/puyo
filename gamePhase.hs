@@ -58,7 +58,7 @@ check_gameEnd       :: PlayerState -> IO Bool
 check_gameEnd state =  do
     flagL   <- get_loseFlag T.TerritoryLeft  state
     flagR   <- get_loseFlag T.TerritoryRight state
-    return $ flagL && flagR
+    return $ flagL || flagR
 
 --------------------------------------------------------------------------------
 --  AnimationPhase Time GamePhase   アニメーション硬直
