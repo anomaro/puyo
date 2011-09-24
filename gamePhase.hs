@@ -34,12 +34,14 @@ import OverwritingPS   (
 --------------------------------------------------------------------------------
 --  ゲーム状態遷移
 --------------------------------------------------------------------------------
-convert_gamePhase :: PlayerState -> I.ButtonState -> V.GameState -> IO()
+-- ゲームオーバーフェーズに移行していた場合、Falseを返す。
+convert_gamePhase :: PlayerState -> I.ButtonState -> V.GameState -> IO Bool
 convert_gamePhase state stateB gs =
     get_gamePhase state 
     >>= \gamePhase  -> (convert_gamePhase' gamePhase) state
+    >>  return (gameContinue gamePhase)
   where
-    convert_gamePhase' :: T.GamePhase -> PlayerState -> IO()
+    convert_gamePhase' :: T.GamePhase -> PlayerState -> IO ()
     convert_gamePhase' T.BuildPhase             = build_playerPuyo  gs
     convert_gamePhase' T.ControlPhase           = control_playerPuyo stateB gs
     convert_gamePhase' T.DropPhase              = drop_fieldPuyo    gs
@@ -49,6 +51,10 @@ convert_gamePhase state stateB gs =
     convert_gamePhase' T.FallPhase'             = fall_ojamaPuyo'   gs
     convert_gamePhase' T.GameOverPhase          = gameover          gs
     convert_gamePhase' (T.AnimationPhase t g)   = animation t g
+    
+    gameContinue    :: T.GamePhase -> Bool
+    gameContinue T.GameOverPhase    = False
+    gameContinue _                  = True
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

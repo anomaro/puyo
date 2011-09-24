@@ -86,8 +86,12 @@ timerInterval   =  1000 `quot` W.frame_rate   :: GLUT.Timeout
 --------------------------------------------------------------------------------
 explainGame :: I.ButtonState -> S.GameStage -> IO S.GameStage
 explainGame bs stage@(S.Game _ gs (state1P, state2P))   = do
-    G.convert_gamePhase state1P bs gs
-    G.convert_gamePhase state2P bs gs
-    return stage
+    flagGameContinue1   <- G.convert_gamePhase state1P bs gs
+    flagGameContinue2   <- G.convert_gamePhase state2P bs gs
+    initializeGame flagGameContinue1 flagGameContinue2
+  where
+    initializeGame  :: Bool -> Bool -> IO S.GameStage
+    initializeGame False False  = S.createGameStage gs
+    initializeGame _     _      = return stage
 explainGame bs stage@(S.Configuration _ _ _)            = do
     C.convertConfigurationPhase bs stage
