@@ -31,9 +31,10 @@ module Variable
 -- ゲーム環境の設定等を決める値
 -- 色数・ぷよの消える数・おじゃまぷよレートなどなど。。。
 
-import qualified Typedata   as T
-import qualified Utility    as U
-import qualified World      as W
+import qualified Typedata               as T
+import qualified Utility                as U
+import qualified World                  as W
+import qualified V_GameDataCollection   as D
 
 import qualified Data.Vector            as VC
 import qualified Data.Vector.Unboxed    as VCU
