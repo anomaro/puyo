@@ -84,21 +84,23 @@ move_puyo state dm  =  do
         move    <- is_move state dm
         pos     <- get_PlayerPuyoPosition state
         if move         -- 移動判定 --
-          then renew_playerPuyo state Nothing
-                                      (Just $ U.neighbor_area dm pos)
-                                      Nothing
-                                      Nothing
-                                      Nothing
-                                      Nothing
+          then move_neighbor pos
           else MND.when (dm == T.DDown)   -- 着地判定 --
-                    $ (shift_gamePhase state T.DropPhase)
-                    >> renew_playerPuyo state Nothing
-                                              Nothing
-                                              Nothing
-                                              (Just 0)
-                                              (Just 0)
-                                              (Just False)
-        return move            
+                    $ (shift_gamePhase state T.DropPhase) >> land_puyo
+        return move
+      where
+        move_neighbor p = renew_playerPuyo state Nothing
+                                                 (Just $ U.neighbor_area dm p)
+                                                 Nothing
+                                                 Nothing
+                                                 Nothing
+                                                 Nothing
+        land_puyo   = renew_playerPuyo state Nothing
+                                             Nothing
+                                             Nothing
+                                             (Just 0)
+                                             (Just 0)
+                                             (Just False)
 
 --------------------------------------------------------------------------------
 -- 操作ぷよの回転。（移動した場合はTrueを返す。 ※回転した場合ではない。）

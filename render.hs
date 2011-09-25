@@ -1,7 +1,6 @@
 -- file: render.hs
 module Render
     (
---    renderConfiguration,    -- Ý’è‰æ–Ê•`‰æ
     render_gameField,       -- ƒQ[ƒ€‚Ì•`‰æ
     ) 
 where
@@ -188,18 +187,20 @@ render_nextPuyo gs state    =  do
     render_nextPuyo' :: [T.Color] -> T.NumOfPuyos -> IO()
     render_nextPuyo' _          0   = return ()
     render_nextPuyo' (cb:cm:cs) n   = do
-        let trt = fst $ get_playerIdentity state
-            n'  = (V.get V.NextPuyoView gs - n) * 2
-            y   = V.topFieldRank + n'
-            x   = if trt == T.TerritoryLeft 
-                    then V.fieldSizeX' gs + 1
-                    else 0
-            mx  = if trt == T.TerritoryLeft 
-                    then unitAreaX gs / 2 * fromIntegral (n'- 2)
-                    else negate $ unitAreaX gs / 2 * fromIntegral (n'- 2)
         render_fieldObject' gs trt (y  , x) mx 0 1 1 0 $ objPuyo cm
         render_fieldObject' gs trt (y+1, x) mx 0 1 1 0 $ objPuyo cb
         render_nextPuyo' cs $ n - 1
+      where 
+        trt = fst $ get_playerIdentity state
+        n'  = (V.get V.NextPuyoView gs - n) * 2
+        y   = V.topFieldRank + n'
+        x   = if trt == T.TerritoryLeft 
+                then V.fieldSizeX' gs + 1
+                else 0
+        mx  = if trt == T.TerritoryLeft 
+                then unitAreaX gs / 2 * fromIntegral (n'- 2)
+                else negate $ unitAreaX gs / 2 * fromIntegral (n'- 2)
+      
 
 --------------------------------------------------------------------------------
 --  ‘€ì‚Õ‚æ•`‰æ
@@ -207,48 +208,48 @@ render_nextPuyo gs state    =  do
 render_playerPuyo           :: V.GameState -> PlayerState -> IO()
 render_playerPuyo gs state  =  do
     color       <- get_PlayerPuyoColors     state
-    (y, x)      <- get_PlayerPuyoPosition   state
+    area        <- get_PlayerPuyoPosition   state
     d           <- get_PlayerPuyoDirection  state
     fallTime    <- get_PlayerPuyoFallTime   state
     rotateTime  <- get_PlayerPuyoRotateTime state
     
-    render_fieldObject' (y, x) fallTime d rotateTime color
+    render_fieldObject' area fallTime d rotateTime color
   where
     render_fieldObject' :: T.AreaPosition -> T.Time
                            -> T.Direction -> T.Time -> (T.Color, T.Color)
                            -> IO()
     render_fieldObject' (y, x) fallTime d rotateTime (cb, cm) = do  
-        let fallTime'   = V.get V.FallTime gs
-            (y', x')    = (fromIntegral y, fromIntegral x)
-            (trt, _)    = get_playerIdentity state
-            posY    = field_pointY     gs - (unitAreaY gs * (y' - 1) ) * 2
-            posX    = field_pointX trt gs + (unitAreaX gs * (x' - 1) ) * 2
-            gy  = 2 * unitAreaY gs * ( fromIntegral (fallTime' - fallTime)
-                                    / fromIntegral fallTime' - 1)
-            (rY, rX) = rotateGap gs d rotateTime
-            sc  = reviseViewSize gs
         render_gameobject' (GLUT.Vector3 posX (posY - gy) 0) 
                             sc sc 0 objControlPuyoBack
         render_gameobject' (GLUT.Vector3 (posX + rX) (posY - gy + rY) 0) 
                             sc sc 0 $ objPuyo cm
         render_gameobject' (GLUT.Vector3 posX (posY - gy) 0) 
                             sc sc 0 $ objPuyo cb
+      where
+        fallTime'   = V.get V.FallTime gs
+        (y', x')    = (fromIntegral y, fromIntegral x)
+        (trt, _)    = get_playerIdentity state
+        posY    = field_pointY     gs - (unitAreaY gs * (y' - 1) ) * 2
+        posX    = field_pointX trt gs + (unitAreaX gs * (x' - 1) ) * 2
+        gy  = 2 * unitAreaY gs * ( fromIntegral (fallTime' - fallTime)
+                                / fromIntegral fallTime' - 1)
+        (rY, rX) = rotateGap gs d rotateTime
+        sc  = reviseViewSize gs
 
 
 -- ‰ñ“]‚Ì•`‰æ‚Ì‚¸‚ê‚Ì”’lB
 rotateGap :: V.GameState -> T.Direction -> T.Time -> (Double, Double)
 rotateGap gs direction rotateTime  = 
-    let r = pi * fromIntegral rotateTime / (2 * fromIntegral W.animeTime_rotate)
-    in
-    (\(fy, fx) -> (2 * unitAreaY gs * fy r, 2 * unitAreaX gs * fx r) ) 
+    (\(fy, fx) -> (2 * unitAreaY gs * fy r,  2 * unitAreaX gs * fx r) ) 
         (directionalFunctions direction)
-      where
-        directionalFunctions :: Floating a => T.Direction -> ((a->a), (a->a))
-        directionalFunctions T.DUp      = (cos, negate.sin)
-        directionalFunctions T.DRight   = (sin, cos)
-        directionalFunctions T.DDown    = (negate.cos, sin)
-        directionalFunctions T.DLeft    = (negate.sin, negate.cos)
-        directionalFunctions _          = (id, id)
+  where
+    r = pi * fromIntegral rotateTime / (2 * fromIntegral W.animeTime_rotate)
+    directionalFunctions :: Floating a => T.Direction -> ((a->a), (a->a))
+    directionalFunctions T.DUp      = (cos, negate.sin)
+    directionalFunctions T.DRight   = (sin, cos)
+    directionalFunctions T.DDown    = (negate.cos, sin)
+    directionalFunctions T.DLeft    = (negate.sin, negate.cos)
+    directionalFunctions _          = (id, id)
 
 --------------------------------------------------------------------------------
 --  ƒtƒB[ƒ‹ƒh”wŒi•`‰æ
@@ -317,7 +318,7 @@ render_fieldPuyo gs trt (T.Landing t pow) pos@(y, _) obj   =
         timeCoefficient = ((halfTime - remTime) / halfTime) ^ 2 -- ŽžŠÔŒW”
           where 
             halfTime    = fromIntegral W.amimeTime_land / 2 + 1
-            remTime     = abs $ halfTime - fromIntegral t   -- Žc‚èŽžŠÔ
+            remTime     = abs $ halfTime - fromIntegral t       -- Žc‚èŽžŠÔ
     weaken n t  = n * (t - 1)
     -- Ú’n–Ê‚ªƒtƒB[ƒ‹ƒh‰º•”‚É‹ß‚¢ê‡‚Íƒpƒ[‚ðŽã‚ß‚éB
     pow'    | height == 0 && pow >= W.landingDefauletPower  = pow - 1
@@ -348,9 +349,10 @@ render_fieldObject' :: V.GameState -> T.Territory -> T.AreaPosition ->
                         GLUT.GLdouble -> GLUT.GLdouble ->
                         GLUT.GLdouble -> GameObject -> IO()
 render_fieldObject' gs trt (y, x) mx my sx sy r obj = do
-    let (y', x') = (fromIntegral y, fromIntegral x)
-        posY = field_pointY     gs - (unitAreaY gs * (y' - 1) ) * 2
-        posX = field_pointX trt gs + (unitAreaX gs * (x' - 1) ) * 2
-        sx'  = sx * reviseViewSize gs
-        sy'  = sy * reviseViewSize gs
     render_gameobject' (GLUT.Vector3 (posX + mx) (posY + my) 0) sx' sy' r obj
+  where
+    (y', x') = (fromIntegral y, fromIntegral x)
+    posY = field_pointY     gs - (unitAreaY gs * (y' - 1) ) * 2
+    posX = field_pointX trt gs + (unitAreaX gs * (x' - 1) ) * 2
+    sx'  = sx * reviseViewSize gs
+    sy'  = sy * reviseViewSize gs

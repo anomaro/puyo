@@ -86,18 +86,16 @@ erase_unionPuyo :: PlayerState -> T.AreaPosition -> IO()
 erase_unionPuyo state p = do
     T.Puyo color _ _  <- get_fieldStateArea p state
     renew_fieldArea state p $ T.Puyo color T.EraseFlag W.animeStartErasing
-    fff color T.DUp
-    fff color T.DRight
-    fff color T.DDown
-    fff color T.DLeft
+    mapM_ (fff color) listDirection
   where
     fff :: T.Color -> T.Direction -> IO()
     fff color d = do
-        let p'  = U.neighbor_area d p
         area    <- get_fieldStateArea p' state
         erase_ojamaPuyo area state p'
         MND.when (isTarget area color p' T.Completion)
           $ erase_unionPuyo state p'
+      where
+        p'  = U.neighbor_area d p
 
 -- おじゃまぷよを消滅させる。（消滅フラグを立てる。）
 erase_ojamaPuyo :: T.Area -> PlayerState -> T.AreaPosition -> IO()
@@ -110,19 +108,16 @@ check_union :: PlayerState -> T.AreaPosition -> IO T.NumOfUnion
 check_union state p    = do
     T.Puyo color _ _  <- get_fieldStateArea p state
     rewrite_unionCheck state p T.Completion
-    nUnionUp    <- fff color T.DUp
-    nUnionRight <- fff color T.DRight
-    nUnionDown  <- fff color T.DDown
-    nUnionLeft  <- fff color T.DLeft
-    return $ nUnionUp + nUnionRight + nUnionDown + nUnionLeft + 1
+    MND.foldM (fff color) 1 listDirection
   where
-    fff :: T.Color -> T.Direction -> IO T.NumOfUnion
-    fff color d = do
-        let p'  = U.neighbor_area d p
+    fff :: T.Color -> T.NumOfUnion -> T.Direction -> IO T.NumOfUnion
+    fff color n d = do
         area    <- get_fieldStateArea p' state
         if isTarget area color p' T.NotYet
-                      then check_union state p'
-                      else return 0
+          then check_union state p' >>= return . (+ n)
+          else return n
+      where
+        p'  = U.neighbor_area d p
 
 -- 対象のエリアが結合チェック・ぷよ消滅の対象かどうか判定。
 isTarget :: T.Area -> T.Color -> T.AreaPosition -> T.UnionCheck -> Bool
@@ -138,3 +133,6 @@ rewrite_unionCheck :: PlayerState -> T.AreaPosition -> T.UnionCheck -> IO()
 rewrite_unionCheck state p uc  = do
     T.Puyo color _ at <- get_fieldStateArea p state
     renew_fieldArea state p $ T.Puyo color uc at
+    
+-- 方向のリスト
+listDirection   = [T.DUp, T.DRight, T.DDown, T.DLeft]
