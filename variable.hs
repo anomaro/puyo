@@ -31,6 +31,10 @@ module Variable
 -- ゲーム環境の設定等を決める値
 -- 色数・ぷよの消える数・おじゃまぷよレートなどなど。。。
 
+import Data.Graph.Inductive.Query.Monad
+
+
+
 import qualified Typedata               as T
 import qualified Utility                as U
 import qualified World                  as W
@@ -42,8 +46,9 @@ import qualified Data.Vector.Unboxed    as VCU
 --------------------------------------------------------------------------------
 --  型
 --------------------------------------------------------------------------------
-data GameState = GameState GameStateValues  -- Int
-                           ColorPattern     -- 色パターン
+data GameState = GameState GameStateValues      -- Int
+                           ColorPattern         -- 色パターン
+                           D.GameDataCollection
 
 type GameStateValues    = VCU.Vector GameStateValue
 type GameStateValue     = Int
@@ -69,7 +74,8 @@ defaultGameState =  VCU.generate numOfGSI $ defaultValue . toEnum
 
 initialGameState    :: GameState
 initialGameState    =  GameState defaultGameState 
-                         $ randomColorPattern $ limitValue max Color
+                                 (randomColorPattern $ limitValue max Color)
+                                 D.initialGameDataCollection
 
 -- 各値の初期値
 defaultValue                :: GameStateIndex -> GameStateValue
@@ -99,19 +105,30 @@ headGSI = minBound  :: GameStateIndex
 lastGSI = maxBound  :: GameStateIndex
 
 --------------------------------------------------------------------------------
---  基本操作
+--  読み取り
 --------------------------------------------------------------------------------
 -- 値を取り出す。 ・・・値の種類（GameStateIndex）を指定して、GameStateから取り出す。
 get :: GameStateIndex -> GameState          -> GameStateValue
-get =  \i             -> \(GameState v _) -> v VCU.! fromEnum i
+get =  \i             -> \(GameState v _ _) -> v VCU.! fromEnum i
 
+-- 色パターン
 get_ColorPattern    :: GameState        -> ColorPattern
-get_ColorPattern =  \(GameState _ c)    -> c
+get_ColorPattern =  \(GameState _ c _)  -> c
 
+-- ゲーム結果のデータ
+get_wins    :: T.Territory -> GameState -> D.NumOfWin
+get_wins trt (GameState _ _ d)  =  f trt $ D.getWins d
+  where
+    f T.TerritoryLeft   = fst
+    f T.TerritoryRight  = snd
+
+--------------------------------------------------------------------------------
+--  書き換え
+--------------------------------------------------------------------------------
 -- 値を書き換える
 newGameState    :: (GameStateValue -> GameStateValue) -> GameStateIndex 
                 -> GameState -> GameState
-newGameState f i gs@(GameState gv cp)  = GameState gv' cp
+newGameState f i gs@(GameState gv cp dc)    = GameState gv' cp dc
   where
     gv' = gv VCU.// [(i', e')]
     i'  = fromEnum i
@@ -120,7 +137,14 @@ newGameState f i gs@(GameState gv cp)  = GameState gv' cp
         | otherwise                 = e''
     e'' = f $ get i gs
     
-    
+-- ゲーム結果のデータを書き換える
+countWins       :: T.Territory -> GameState -> GameState
+countWins trt (GameState gv cp dc)  = GameState gv cp dc'
+  where
+    dc'  = D.renewGameDataCollection (f trt $ (1 +)) dc
+    f T.TerritoryLeft   = mapFst
+    f T.TerritoryRight  = mapSnd
+
 
 --------------------------------------------------------------------------------
 --  フィールドサイズ
