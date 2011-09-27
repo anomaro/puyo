@@ -1,7 +1,11 @@
 -- v_gameDataCollection.hs
 -- 勝利数など、ゲーム結果のデータを集めてまとめておく。
-module V_GameDataCollection 
-  where
+module GameDataCollection 
+where
+
+import Data.Graph.Inductive.Query.Monad
+
+import qualified Typedata               as T
 
 --------------------------------------------------------------------------------
 --  型
@@ -32,3 +36,12 @@ renewGameDataCollection :: (Wins -> Wins)
                         -> GameDataCollection
 renewGameDataCollection fw (GameData ew)    =
     GameData (fw ew)
+    
+
+-- 敗北していないプレイヤーの勝ち数を１増やす。
+addWin  :: Maybe (T.Territory) -> GameDataCollection -> GameDataCollection
+addWin Nothing  gdc = gdc
+addWin (Just a) gdc = renewGameDataCollection (f a (+1)) gdc
+  where
+    f T.TerritoryLeft   = mapFst
+    f T.TerritoryRight  = mapSnd

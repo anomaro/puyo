@@ -60,7 +60,7 @@ display_callback stage =  do
     GLUT.swapBuffers
   where
     matching (S.Configuration gs sl _)          = C.renderConfiguration gs sl
-    matching (S.Game _ gs (state1P, state2P))   =
+    matching (S.Game _ gs (state1P, state2P) _) =
         R.render_gameField gs state1P >> R.render_gameField gs state2P
 
 --  キーボード・マウスコールバック
@@ -85,7 +85,7 @@ timerInterval   =  1000 `quot` W.frame_rate   :: GLUT.Timeout
 --  ゲームの更新 
 --------------------------------------------------------------------------------
 explainGame :: I.ButtonState -> S.GameStage -> IO S.GameStage
-explainGame bs stage@(S.Game _ gs (state1P, state2P))   = do
+explainGame bs stage@(S.Game _ gs (state1P, state2P) gdc)   = do
     flagGameContinue1   <- G.convert_gamePhase state1P bs gs
     flagGameContinue2   <- G.convert_gamePhase state2P bs gs
     initializeGame flagGameContinue1 flagGameContinue2

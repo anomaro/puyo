@@ -4,6 +4,7 @@ module GamePhase
     convert_gamePhase,
     )
     where
+import Data.Maybe (isJust)
 
 import qualified Typedata   as T
 import qualified Utility    as U ((<-+->))
@@ -24,7 +25,7 @@ import QueryPS (
     get_gamePhase,
     get_PlayerPuyoExistent,
     get_yokoku,
-    get_loseFlag,
+    get_whoWins,
     )
 import OverwritingPS   (
     shift_gamePhase,
@@ -62,9 +63,8 @@ convert_gamePhase state stateB gs =
 --------------------------------------------------------------------------------
 check_gameEnd       :: PlayerState -> IO Bool
 check_gameEnd state =  do
-    flagL   <- get_loseFlag T.TerritoryLeft  state
-    flagR   <- get_loseFlag T.TerritoryRight state
-    return $ flagL || flagR
+    winPlayer   <- get_whoWins  state
+    return $ isJust winPlayer
 
 --------------------------------------------------------------------------------
 --  AnimationPhase Time GamePhase   アニメーション硬直

@@ -29,8 +29,8 @@ module QueryPS
     get_fallOjamaPuyo,
     get_yokoku,
     
-    -- 敗北フラグ取得
-    get_loseFlag,
+    -- 敗北フラグ
+    get_whoWins,
     
     -- 状態生成
     create_playerstate,
@@ -80,14 +80,15 @@ get_nextPuyoColors  =  IORF.readIORef <=< P'.takeout_nextPuyoState
 --------------------------------------------------------------------------------
 --  敗北フラグ
 --------------------------------------------------------------------------------
--- プレイヤーが敗北しているかどうか調べる。（敗北している場合はTrueを得る）
-get_loseFlag            :: T.Territory -> P'.PlayerState -> IO Bool
-get_loseFlag trt state  =  do
+-- 勝利したプレイヤーを調べる。
+get_whoWins         :: P'.PlayerState -> IO (Maybe T.Territory)
+get_whoWins state   =  do
     loseFlag    <- IORF.readIORef $ P'.takeout_loseFlagState state
-    return $ (f trt) loseFlag
+    return $ check loseFlag
   where
-    f T.TerritoryLeft   = fst
-    f T.TerritoryRight  = snd
+    check (False, True)     = Just T.TerritoryLeft
+    check (True,  False)    = Just T.TerritoryRight
+    check _                 = Nothing
 
 --------------------------------------------------------------------------------
 --  予告ぷよ
