@@ -25,15 +25,15 @@ type PlayerStates   = (P.PlayerState, P.PlayerState)
 --------------------------------------------------------------------------------
 --  ê–Êì¬
 --------------------------------------------------------------------------------
-createGameStage     :: V.GameState -> IO GameStage
-createGameStage gs  =  do
+createGameStage         :: V.GameState -> D.GameDataCollection -> IO GameStage
+createGameStage gs gdc  =  do
     n1P         <- Q.create_nextPuyoState gs
     n2P         <- Q.copy_nextPuyoState n1P
     y           <- Q.create_yokokuState
     l           <- Q.create_loseFlagState
     state1P     <- Q.create_playerstate W.defaultUser1P gs n1P y l
     state2P     <- Q.create_playerstate W.defaultUser2P gs n2P y l
-    return $ Game Puyopuyo gs (state1P, state2P) D.initialGameDataCollection
+    return $ Game Puyopuyo gs (state1P, state2P) gdc
 
 createConfigurationStage    :: V.GameState -> IO GameStage
 createConfigurationStage gs =  

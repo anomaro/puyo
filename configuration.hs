@@ -9,6 +9,7 @@ import qualified Graphics.UI.GLUT   as GLUT
 import qualified Input      as I
 import qualified Variable   as V
 import qualified Stage      as S
+import qualified GameDataCollection     as D
 
 import RenderObject
 import ConfigurationTypeData
@@ -62,11 +63,11 @@ convertConfigurationPhase bs stage  = do
 
 convertConfigurationPhase'  :: [I.Button] -> S.GameStage -> IO S.GameStage
 convertConfigurationPhase' bs stage@(S.Configuration gs sl SelectPhase)
-  | elem I.one_button   bs = S.createGameStage gs
-  | elem I.up_button    bs = retCon gs (predSelection sl) nextPhase
-  | elem I.down_button  bs = retCon gs (succSelection sl) nextPhase
-  | elem I.right_button bs = retCon (gs' succ) sl nextPhase
-  | elem I.left_button  bs = retCon (gs' pred) sl nextPhase
+  | elem I.one_button   bs  = S.createGameStage gs D.initialGameDataCollection
+  | elem I.up_button    bs  = retCon gs (predSelection sl) nextPhase
+  | elem I.down_button  bs  = retCon gs (succSelection sl) nextPhase
+  | elem I.right_button bs  = retCon (gs' succ) sl nextPhase
+  | elem I.left_button  bs  = retCon (gs' pred) sl nextPhase
   | otherwise               = return stage
   where
     nextPhase   = defaultConfigAnimePhase
