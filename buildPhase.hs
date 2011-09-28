@@ -35,6 +35,7 @@ build_playerPuyo        :: V.GameState -> P.PlayerState -> IO()
 build_playerPuyo gs state   =  do
     renewScoreCalculation (0*) (const []) (const []) state
     color   <- pick_nextPuyoColor state
+    eat_nextPuyo state 2
     renew_playerPuyo' state color
                             build_Area
                             T.DUp
@@ -46,13 +47,14 @@ build_playerPuyo gs state   =  do
     build_Area  = U.neighbor_area T.DUp $ V.criticalArea gs :: T.AreaPosition
     trt     = fst $ get_playerIdentity state
 
--- ネクストぷよの色を調べて、ネクストぷよリストを消費する。
+-- ネクストぷよの色を調べて取り出す。
 pick_nextPuyoColor  :: P.PlayerState -> IO (T.Color, T.Color)
 pick_nextPuyoColor state    = do
     colors  <- get_nextPuyoColors state
-    let [cb, cm]  = take 2 colors
     eat_nextPuyo state 2
-    return (cb, cm)
+    return $ pair colors
+  where
+    pair (x:x':_)   = (x, x')
 
 --------------------------------------------------------------------------------
 --  敗北判定
