@@ -1,5 +1,5 @@
 -- renderObject.hs
-module RenderObject
+module Render.Object
     (
     GameObject,
     

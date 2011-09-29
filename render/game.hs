@@ -1,10 +1,7 @@
 -- file: render.hs
-module RenderGame
-    (
---    renderConfiguration,    -- İ’è‰æ–Ê•`‰æ
-    render_gameField,       -- ƒQ[ƒ€‚Ì•`‰æ
-    ) 
-where
+module Render.Game
+( render_gameField,       -- ƒQ[ƒ€‚Ì•`‰æ
+) where
 
 import Control.Monad
 import Control.Applicative
@@ -42,7 +39,7 @@ import qualified World      as W (
     landingDefauletPower,
     sizeYyokokuLv3,
     )
-import RenderObject
+import Render.Object
 
 --------------------------------------------------------------------------------
 --  ƒQ[ƒ€‚Ì•`‰æ
