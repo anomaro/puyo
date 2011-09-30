@@ -1,11 +1,11 @@
 -- v_gameDataCollection.hs
 -- 勝利数など、ゲーム結果のデータを集めてまとめておく。
-module GameDataCollection 
+module State.Result
 where
 
 import Data.Graph.Inductive.Query.Monad
 
-import qualified Typedata               as T
+import qualified Common.DataType       as T
 
 --------------------------------------------------------------------------------
 --  型

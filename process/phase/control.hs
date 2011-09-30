@@ -1,5 +1,5 @@
 -- controlPhase.hs
-module ControlPhase
+module Process.Phase.Control
     (
     fallNatural_playerPuyo,
     fall_puyo,
@@ -10,14 +10,14 @@ module ControlPhase
 
 import qualified Control.Monad      as MND
 
-import qualified Typedata   as T (Time, Direction(..), GamePhase(DropPhase),
+import qualified Common.DataType  as T (Time, Direction(..), GamePhase(DropPhase),
                                   RotationDirection(..) )
-import qualified Utility    as U (neighbor_area, rotate_direction)
-import qualified Variable   as V (GameState, get, GameStateIndex(FallTime))
-import qualified World      as W (animeTime_rotate, flag_quickTrun)
+import qualified Common.Function   as U (neighbor_area, rotate_direction)
+import qualified State.Setting as V (GameState, get, GameStateIndex(FallTime))
+import qualified Common.Name    as W (animeTime_rotate, flag_quickTrun)
 
-import PlayerState
-import QueryPS (
+import State.Player.DataType
+import State.Player.Query   (
     get_PlayerPuyoExistent,
     get_PlayerPuyoPosition,
     get_PlayerPuyoDirection,
@@ -27,7 +27,7 @@ import QueryPS (
     is_neighborSpace,
     get_PlayerPuyoColors,
     )
-import OverwritingPS   (
+import State.Player.Overwriting (
     renew_playerPuyo,
     shift_gamePhase,
     )

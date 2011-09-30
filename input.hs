@@ -27,9 +27,8 @@ import qualified Data.IORef         as IORF
 import qualified Graphics.UI.GLUT   as GLUT
 import Data.List (nub, (\\))
 
-import qualified Typedata   as T (Time)
-import qualified World      as W (inputTime_moveX)
---import qualified Stage      as S
+import qualified Common.DataType  as T (Time)
+import qualified Common.Name     as W (inputTime_moveX)
 
 --------------------------------------------------------------------------------
 --  É{É^ÉìÇÃèÛë‘

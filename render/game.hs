@@ -9,9 +9,9 @@ import Control.Applicative
 import qualified Graphics.UI.GLUT   as GLUT
 import qualified Control.Monad      as MND
 
-import qualified GameDataCollection     as D
-import PlayerState
-import QueryPS  (
+import qualified State.Result   as D
+import State.Player.DataType
+import State.Player.Query   (
     get_playerIdentity,
     get_PlayerPuyoExistent,
     get_PlayerPuyoColors,
@@ -25,14 +25,14 @@ import QueryPS  (
     get_score,
     get_yokoku,
     )
-import OverwritingPS    (
+import State.Player.Overwriting (
     renew_animationType,
     )
 
-import qualified Typedata   as T
-import qualified Utility    as U
-import qualified Variable   as V
-import qualified World      as W (
+import qualified Common.DataType   as T
+import qualified Common.Function    as U
+import qualified State.Setting  as V
+import qualified Common.Name      as W (
     animeTime_rotate,
     amimeTime_drop,
     amimeTime_land,

@@ -1,33 +1,33 @@
 -- file: gamePhase.hs
-module GamePhase
+module Process.Game
     (
     convert_gamePhase,
     )
     where
 import Data.Maybe (isJust)
 
-import qualified Typedata   as T
-import qualified Utility    as U ((<-+->))
-import qualified Variable   as V (GameState)
-import qualified World      as W (amimeTime_move, amimeTime_drop,
+import qualified Common.DataType   as T
+import qualified Common.Function    as U ((<-+->))
+import qualified State.Setting   as V (GameState)
+import qualified Common.Name      as W (amimeTime_move, amimeTime_drop,
                                   amimeTime_land, amimeTime_erase)
 import qualified Input          as I
-import qualified BuildPhase     as B
-import qualified ControlPhase   as C
-import qualified DropPhase      as D
-import qualified ErasePhase     as E
-import qualified FallPhase      as F
-import qualified GameoverPhase  as G
+import qualified Process.Phase.Build    as B
+import qualified Process.Phase.Control  as C
+import qualified Process.Phase.Drop     as D
+import qualified Process.Phase.Erase    as E
+import qualified Process.Phase.Fall     as F
+import qualified Process.Phase.Gameover as G
 
-import PlayerState
-import QueryPS (
+import State.Player.DataType
+import State.Player.Query   (
     get_playerIdentity,
     get_gamePhase,
     get_PlayerPuyoExistent,
     get_yokoku,
     get_whoWins,
     )
-import OverwritingPS   (
+import State.Player.Overwriting (
     shift_gamePhase,
     renewScore,
     )

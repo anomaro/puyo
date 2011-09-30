@@ -3,9 +3,9 @@ where
 
 import qualified Graphics.UI.GLUT   as GLUT
 
-import qualified Variable   as V
+import qualified State.Setting  as V
 import Render.Object
-import ConfigurationTypeData
+import State.Configuration
 
 --------------------------------------------------------------------------------
 --  ê›íËâÊñ ï`âÊ

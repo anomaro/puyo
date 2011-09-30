@@ -1,12 +1,12 @@
 -- configuration.hs
-module ConfigurationTypeData
+module State.Configuration
     where
 
 import Data.Maybe (isJust, fromJust)
 
-import qualified Typedata   as T
-import qualified Variable   as V
-import qualified World      as W
+import qualified Common.DataType   as T
+import qualified State.Setting   as V
+import qualified Common.Name      as W
     
 --------------------------------------------------------------------------------
 --  Œ^

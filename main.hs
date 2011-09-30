@@ -9,10 +9,10 @@ import Control.Applicative
 import qualified Graphics.UI.GLUT   as GLUT 
 import qualified System.Exit        as EXIT (ExitCode(ExitSuccess), exitWith)
 
-import qualified Variable   as V (GameState, initialGameState)
-import qualified World      as W -- (frame_rate, defaultUser1P, defaultUser2P)
+import qualified State.Setting  as V (GameState, initialGameState)
+import qualified Common.Name   as W
 
-import qualified GamePhase      as G
+import qualified Process.Game   as G
 import qualified Render         as R
 import qualified Input          as I (
     ButtonState,
@@ -22,10 +22,10 @@ import qualified Input          as I (
     putOut_key,
     )
 import qualified Stage          as S
-import qualified GameDataCollection     as D
-import qualified PlayerState    as P
-import qualified QueryPS        as Q
-import qualified Configuration  as C
+import qualified State.Result   as D
+import qualified State.Player.DataType  as P
+import qualified State.Player.Query     as Q
+import qualified Process.Configuration  as C
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

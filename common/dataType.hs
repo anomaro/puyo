@@ -1,5 +1,5 @@
 -- file: typedata.hs
-module Typedata
+module Common.DataType
      where
 
 

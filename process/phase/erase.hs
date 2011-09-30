@@ -1,5 +1,5 @@
 -- erasePhase.hs
-module ErasePhase
+module Process.Phase.Erase
     (
     erase_puyo,
     rewriteSpase_puyo,
@@ -8,7 +8,7 @@ module ErasePhase
 
 import qualified Control.Monad      as MND
 
-import qualified Typedata   as T (
+import qualified Common.DataType   as T (
     UnionCheck(..),
     Color(AnyColor),
     Area(..),
@@ -17,16 +17,16 @@ import qualified Typedata   as T (
     Direction(..),
     Score(..),
     )
-import qualified Utility    as U (
+import qualified Common.Function    as U (
     neighbor_area,
     againstTerritory,
     )
-import qualified Variable   as V
-import qualified World      as W ( animeStartErasing )
+import qualified State.Setting  as V
+import qualified Common.Name      as W ( animeStartErasing )
 
-import PlayerState
-import QueryPS
-import OverwritingPS   
+import State.Player.DataType
+import State.Player.Query
+import State.Player.Overwriting
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

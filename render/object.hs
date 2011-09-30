@@ -26,8 +26,8 @@ module Render.Object
 
 import qualified Graphics.UI.GLUT   as GLUT
 
-import qualified Typedata   as T
-import qualified World      as W (window_sizeY, window_sizeX)
+import qualified Common.DataType   as T
+import qualified Common.Name      as W (window_sizeY, window_sizeX)
 
 --------------------------------------------------------------------------------
 --  Œ^

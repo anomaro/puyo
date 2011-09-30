@@ -1,4 +1,4 @@
-module OverwritingPS
+module State.Player.Overwriting
     (   
     -- ÉQÅ[ÉÄèÛë‘ëJà⁄çXêV
     shift_gamePhase,
@@ -30,8 +30,8 @@ module OverwritingPS
     )
     where
 
-import PlayerStateSubstance
-import QueryPS
+import State.Player.Substance
+import State.Player.Query
 
 import Data.List    (nub)
 import Data.Maybe   (fromMaybe)
@@ -40,9 +40,9 @@ import Control.Applicative
 import qualified Data.IORef         as IORF
 import qualified Data.Array.IO      as AIO
 
-import qualified Typedata   as T
-import qualified Utility    as U
-import qualified Variable   as V
+import qualified Common.DataType   as T
+import qualified Common.Function    as U
+import qualified State.Setting  as V
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

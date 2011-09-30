@@ -1,9 +1,9 @@
 -- world.hs
-module World
+module Common.Name
     where
 
 import qualified Graphics.UI.GLUT   as GLUT (GLsizei)
-import qualified Typedata   as T
+import qualified Common.DataType   as T
 
 --------------------------------------------------------------------------------
 --  íËêî

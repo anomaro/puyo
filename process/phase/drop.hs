@@ -1,5 +1,5 @@
 -- dropPhase.hs
-module DropPhase
+module Process.Phase.Drop
     (
     land_puyo,
     drop_puyo,
@@ -9,7 +9,7 @@ module DropPhase
 import Control.Applicative
 import qualified Control.Monad      as MND
 
-import qualified Typedata   as T (
+import qualified Common.DataType  as T (
     AreaPosition,
     PositionY,
     Area(..),
@@ -18,16 +18,16 @@ import qualified Typedata   as T (
     UnionCheck(NotYet),
     Power,
     )
-import qualified Utility    as U (isPuyo, neighbor_area)
-import qualified Variable   as V 
-import qualified World      as W (
+import qualified Common.Function    as U (isPuyo, neighbor_area)
+import qualified State.Setting   as V 
+import qualified Common.Name      as W (
     animeStartLanding,
     animeStartDropping,
     landingDefauletPower,
     )
 
-import PlayerState
-import QueryPS (
+import State.Player.DataType
+import State.Player.Query   (
     get_fieldStateArea,
     is_neighborSpace,
     get_PlayerPuyoExistent,
@@ -35,7 +35,7 @@ import QueryPS (
     get_PlayerPuyoPosition,
     get_PlayerPuyoDirection,
     )
-import OverwritingPS   (
+import State.Player.Overwriting (
     remove_playerPuyo,
     renew_fieldArea,
     )  

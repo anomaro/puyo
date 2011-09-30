@@ -1,4 +1,4 @@
-module PlayerStateSubstance
+module State.Player.Substance
     where
 
 --------------------------------------------------------------------------------
@@ -7,8 +7,8 @@ import Control.Applicative
 import qualified Data.IORef         as IORF
 import qualified Data.Array.IO      as AIO
 
-import qualified Typedata   as T
-import qualified Utility    as U
+import qualified Common.DataType   as T
+import qualified Common.Function    as U
 
 --------------------------------------------------------------------------------
 --  ÉvÉåÉCÉÑÅ[èÛë‘

@@ -1,4 +1,4 @@
-module QueryPS
+module State.Player.Query
     (
     -- プレーヤー識別子取得。
     get_playerIdentity,
@@ -42,16 +42,16 @@ module QueryPS
     where
 
 
-import qualified PlayerStateSubstance   as P'
+import qualified State.Player.Substance as P'
 
 import Control.Monad
 import Control.Applicative
 import qualified Data.IORef         as IORF
 import qualified Data.Array.IO      as AIO
 
-import qualified Typedata   as T
-import qualified Utility    as U
-import qualified Variable   as V
+import qualified Common.DataType   as T
+import qualified Common.Function    as U
+import qualified State.Setting  as V
 
 
 (<$<) :: Functor f => (a -> b) -> (c -> f a) -> (c -> f b)

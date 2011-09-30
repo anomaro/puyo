@@ -1,12 +1,12 @@
 -- utility.hs
-module Utility
+module Common.Function
     where
 
 import Control.Applicative
 import qualified System.Random          as RAN
 import qualified Control.Monad.State    as CMS
 
-import qualified Typedata       as T
+import qualified Common.DataType       as T
 
 --------------------------------------------------------------------------------
 class Directional d where

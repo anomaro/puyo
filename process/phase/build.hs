@@ -1,5 +1,5 @@
 -- buildPhase.hs
-module BuildPhase
+module Process.Phase.Build
     (
     build_playerPuyo,
     checkLose,
@@ -8,14 +8,14 @@ module BuildPhase
 
 import Control.Monad
 
-import qualified PlayerState    as P
-import QueryPS (
+import State.Player.DataType    as P
+import State.Player.Query   (
     get_nextPuyoColors,
     get_PlayerPuyoExistent,
     get_playerIdentity,
     get_fieldStateArea,
     )
-import OverwritingPS   (
+import State.Player.Overwriting (
     eat_nextPuyo,
     renew_playerPuyo',
     renewScoreCalculation,
@@ -24,9 +24,9 @@ import OverwritingPS   (
     renewLoseFlag,
     )
 
-import qualified Typedata   as T (Color, Direction(DUp), AreaPosition)
-import qualified Utility    as U (neighbor_area, againstTerritory, isPuyo)
-import qualified Variable   as V 
+import qualified Common.DataType   as T (Color, Direction(DUp), AreaPosition)
+import qualified Common.Function   as U (neighbor_area, againstTerritory, isPuyo)
+import qualified State.Setting  as V 
 
 --------------------------------------------------------------------------------
 --  ëÄçÏÇ’ÇÊÇê∂ê¨

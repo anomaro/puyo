@@ -1,5 +1,5 @@
 -- fallPhase.hs
-module FallPhase(
+module Process.Phase.Fall(
     moveYokokuPuyo,
     putOjamaPuyo,
     )
@@ -8,18 +8,18 @@ module FallPhase(
 import Data.List (delete)
 import Control.Monad
 
-import qualified Typedata   as T
-import qualified Utility    as U
-import qualified Variable   as V
-import qualified World      as W
+import qualified Common.DataType  as T
+import qualified Common.Function    as U
+import qualified State.Setting   as V
+import qualified Common.Name      as W
 
-import qualified PlayerState    as P
-import QueryPS (
+import State.Player.DataType    as P
+import State.Player.Query (
     get_playerIdentity,
     get_fallOjamaPuyo,
     is_neighborSpace,
     )
-import OverwritingPS   (
+import State.Player.Overwriting (
     renew_fieldArea,
     renewYokoku,
     toSupplyYokoku,

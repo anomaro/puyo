@@ -1,12 +1,12 @@
-module PlayerState
+module State.Player.DataType
     (
     PlayerState,
     )
     where
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-import qualified PlayerStateSubstance   as P' (PlayerState)
+import qualified State.Player.Substance as SUB (PlayerState)
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-type PlayerState = P'.PlayerState
+type PlayerState = SUB.PlayerState

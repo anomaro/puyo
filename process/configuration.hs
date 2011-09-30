@@ -1,15 +1,15 @@
 -- configuration.hs
-module Configuration
+module Process.Configuration
     where
 
 import Data.Maybe
 
 import qualified Input      as I
-import qualified Variable   as V
+import qualified State.Setting   as V
 import qualified Stage      as S
-import qualified GameDataCollection     as D
+import qualified State.Result   as D
 
-import ConfigurationTypeData
+import State.Configuration
 
 --------------------------------------------------------------------------------
 --  ÉLÅ[ì¸óÕâéﬂ
