@@ -8,6 +8,8 @@ module Process.Phase.Erase
 
 import qualified Control.Monad      as MND
 
+import qualified Common.PlayerIdentity  as Identity (against, territory)
+
 import qualified Common.DataType   as T (
     UnionCheck(..),
     Color(AnyColor),
@@ -19,7 +21,6 @@ import qualified Common.DataType   as T (
     )
 import qualified Common.Function    as U (
     neighbor_area,
-    againstTerritory,
     )
 import qualified State.Setting  as V
 import qualified Common.Name      as W ( animeStartErasing )
@@ -71,7 +72,7 @@ rewriteSpase_puyo gs state  =  do
         renewYokoku id id (n +) trt state
         renewScore ((ds - m) +) (const m) state
       where
-        trt     = U.againstTerritory $ fst $ get_playerIdentity state
+        trt = Identity.against . Identity.territory $ get_playerIdentity state
 
 --------------------------------------------------------------------------------
 -- 結合チェック状態を未調査状態にする。

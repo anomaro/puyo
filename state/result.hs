@@ -6,6 +6,7 @@ where
 import Data.Graph.Inductive.Query.Monad
 
 import qualified Common.DataType       as T
+import qualified Common.PlayerIdentity  as Identity
 
 --------------------------------------------------------------------------------
 --  Œ^
@@ -39,9 +40,6 @@ renewGameDataCollection fw (GameData ew)    =
     
 
 -- ”s–k‚µ‚Ä‚¢‚È‚¢ƒvƒŒƒCƒ„[‚ÌŸ‚¿”‚ð‚P‘‚â‚·B
-addWin  :: Maybe (T.Territory) -> GameDataCollection -> GameDataCollection
+addWin  :: Maybe (Identity.Territory) -> GameDataCollection -> GameDataCollection
 addWin Nothing  gdc = gdc
-addWin (Just a) gdc = renewGameDataCollection (f a (+1)) gdc
-  where
-    f T.TerritoryLeft   = mapFst
-    f T.TerritoryRight  = mapSnd
+addWin (Just a) gdc = renewGameDataCollection (Identity.apply a (+1)) gdc

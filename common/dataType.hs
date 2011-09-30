@@ -89,17 +89,17 @@ data GamePhase  = BuildPhase    -- ぷよ生成
 --------------------------------------------------------------------------------
 --  プレイヤー
 --------------------------------------------------------------------------------
--- プレイヤーを識別するデータ。
-type PlayerIdentity  = (Territory, Player)
+---- プレイヤーを識別するデータ。
+--type PlayerIdentity  = (Territory, Player)
 
--- 表示フィールドを識別するデータ。
-data Territory  = TerritoryLeft
-                | TerritoryRight
-        deriving (Show, Eq)
--- プレイヤーを表すデータ。
-data Player     = User          -- ユーザ
-                | Com ComName   -- コンピュータ　名前
-data ComName    = Pechipechi
+---- 表示フィールドを識別するデータ。
+--data Territory  = TerritoryLeft
+--                | TerritoryRight
+--        deriving (Show, Eq)
+---- プレイヤーを表すデータ。
+--data Player     = User          -- ユーザ
+--                | Com ComName   -- コンピュータ　名前
+--data ComName    = Pechipechi
 
 --------------------------------------------------------------------------------
 --  スコア

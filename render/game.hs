@@ -29,6 +29,8 @@ import State.Player.Overwriting (
     renew_animationType,
     )
 
+import qualified Common.PlayerIdentity  as Identity
+
 import qualified Common.DataType   as T
 import qualified Common.Function    as U
 import qualified State.Setting  as V
@@ -80,10 +82,11 @@ defaultViewFieldSizeX   = 8     :: Double
 field_pointY    :: V.GameState -> Double
 field_pointY    =  (+) 1  . unitAreaY
 
-field_pointX                        :: T.Territory -> V.GameState -> Double
-field_pointX T.TerritoryLeft  gs    =  - 1 + unitAreaX gs
-field_pointX T.TerritoryRight gs    = 
-    1 - unitAreaX gs - (unitAreaX gs * fromIntegral (V.fieldSizeX' gs - 1)) * 2
+field_pointX :: Identity.Territory -> V.GameState -> Double
+field_pointX trt gs = Identity.pick trt (l, r)
+  where
+    l = - 1 + unitAreaX gs
+    r = 1 - unitAreaX gs - (unitAreaX gs * fromIntegral (V.fieldSizeX' gs - 1)) * 2
 
 --(unitAreaX gs * (x' - 1) ) * 2
 
@@ -96,16 +99,13 @@ render_wins gs state gdc    =  do
     GLUT.color (GLUT.Color3 1.0 1.0 1.0 :: GLUT.Color3 Double)
     render_gameobject' (GLUT.Vector3 xm ym 0) scale scale 0 objWins
   where
-    trt = fst $ get_playerIdentity state
+    trt = Identity.territory $ get_playerIdentity state
     xm  = field_pointX trt gs + unitAreaX gs
     ym  = field_pointY gs - unitAreaY gs * 2 * (fromIntegral $ V.fieldSizeY' gs)
     scale       = 0.001
-    objWins     = do
-        GLUT.renderString GLUT.Roman $ show wins
+    objWins     = GLUT.renderString GLUT.Roman $ show wins
       where
-        wins    = f trt $ D.getWins gdc
-        f T.TerritoryLeft   = fst
-        f T.TerritoryRight  = snd
+        wins    = Identity.pick trt $ D.getWins gdc
 
 --------------------------------------------------------------------------------
 --  予告ぷよ描画    
@@ -119,7 +119,7 @@ render_yokoku gs state  =  do
     targetPosX  = [1..fieldSizeX]
     fieldSizeX  = V.get V.FieldSizeX gs
     objs n      = reverse $ yokokuKinds' n gs
-    trt         = fst $ get_playerIdentity state
+    trt         = Identity.territory $ get_playerIdentity state
     f p o   = render_fieldObject' gs trt p 0 0 1 1 0 o
 
 -- 予告ぷよの表示する種類を決める。
@@ -153,7 +153,7 @@ render_score gs state   =  do
     GLUT.color (GLUT.Color3 1.0 1.0 1.0 :: GLUT.Color3 Double)
     render_gameobject' (GLUT.Vector3 xm ym 0) scale scale 0 objScore
   where
-    xm  = field_pointX (fst $ get_playerIdentity state) gs + unitAreaX gs
+    xm  = field_pointX (Identity.territory $ get_playerIdentity state) gs + unitAreaX gs
     ym  = field_pointY gs - unitAreaY gs * 2 * (fromIntegral $ V.fieldSizeY' gs)
     scale       = 0.001
     objScore    = do
@@ -190,7 +190,7 @@ render_fallPoint gs state   =  do
         b   <- is_neighborSpace pos T.DDown state
         if b    then bottomArea $ U.neighbor_area T.DDown pos
                 else return pos
-    trt = fst $ get_playerIdentity state
+    trt = Identity.territory $ get_playerIdentity state
 
 --------------------------------------------------------------------------------
 --  ネクストぷよ描画
@@ -203,13 +203,13 @@ render_nextPuyo gs state    =  do
     render_nextPuyo' :: [T.Color] -> T.NumOfPuyos -> IO()
     render_nextPuyo' _          0   = return ()
     render_nextPuyo' (cb:cm:cs) n   = do
-        let trt = fst $ get_playerIdentity state
+        let trt = Identity.territory $ get_playerIdentity state
             n'  = (V.get V.NextPuyoView gs - n) * 2
             y   = V.topFieldRank + n'
-            x   = if trt == T.TerritoryLeft 
+            x   = if trt == Identity.Left 
                     then V.fieldSizeX' gs + 1
                     else 0
-            mx  = if trt == T.TerritoryLeft 
+            mx  = if trt == Identity.Left 
                     then unitAreaX gs / 2 * fromIntegral (n'- 2)
                     else negate $ unitAreaX gs / 2 * fromIntegral (n'- 2)
         render_fieldObject' gs trt (y  , x) mx 0 1 1 0 $ objPuyo cm
@@ -235,7 +235,7 @@ render_playerPuyo gs state  =  do
     render_fieldObject' (y, x) fallTime d rotateTime (cb, cm) = do  
         let fallTime'   = V.get V.FallTime gs
             (y', x')    = (fromIntegral y, fromIntegral x)
-            (trt, _)    = get_playerIdentity state
+            trt         = Identity.territory $ get_playerIdentity state
             posY    = field_pointY     gs - (unitAreaY gs * (y' - 1) ) * 2
             posX    = field_pointX trt gs + (unitAreaX gs * (x' - 1) ) * 2
             gy  = 2 * unitAreaY gs * ( fromIntegral (fallTime' - fallTime)
@@ -271,7 +271,7 @@ rotateGap gs direction rotateTime  =
 render_backfield            :: V.GameState -> PlayerState -> IO()
 render_backfield gs state   =  MND.mapM_ f $ V.fieldArrayIndices gs
   where
-    trt = fst $ get_playerIdentity state
+    trt = Identity.territory $ get_playerIdentity state
     f p = render_fieldObject gs trt p objBackfield
 
 --------------------------------------------------------------------------------
@@ -290,7 +290,7 @@ render_field gs state   =  MND.mapM_ f $ V.fieldArrayIndices gs
         matching (T.Ojama  _ a) = render_fieldPuyo gs trt a p objOjamaPuyo
         matching _              = return ()
         
-        trt = fst $ get_playerIdentity state
+        trt = Identity.territory $ get_playerIdentity state
         renderColorPuyoLink color animeTime = 
             neighborSameColorPuyo p color state
             >>= render_fieldPuyo gs trt animeTime p . objPuyo' color 
@@ -318,7 +318,7 @@ neighborSameColorPuyo p c state =  do
 --  エリア描画    
 --------------------------------------------------------------------------------
 -- フィールドのぷよの描画。（色ぷよ・おじゃまぷよ）
-render_fieldPuyo    :: V.GameState -> T.Territory -> T.AnimationType 
+render_fieldPuyo    :: V.GameState -> Identity.Territory -> T.AnimationType 
                     -> T.AreaPosition -> GameObject -> IO()
 render_fieldPuyo gs trt (T.Landing t pow) pos@(y, _) obj   =
     render_fieldObject' gs trt pos 0 moveY scaleX scaleY 0 obj
@@ -353,12 +353,12 @@ render_fieldPuyo gs trt _               p obj =
     render_fieldObject gs trt p obj
 
 -- フィールド座標とオブジェクトを指定して、その位置に描画する。
-render_fieldObject  :: V.GameState -> T.Territory -> T.AreaPosition
+render_fieldObject  :: V.GameState -> Identity.Territory -> T.AreaPosition
                     -> GameObject -> IO()
 render_fieldObject gs trt p obj = render_fieldObject' gs trt p 0 0 1 1 0 obj
 
 
-render_fieldObject' :: V.GameState -> T.Territory -> T.AreaPosition ->
+render_fieldObject' :: V.GameState -> Identity.Territory -> T.AreaPosition ->
                         GLUT.GLdouble -> GLUT.GLdouble ->
                         GLUT.GLdouble -> GLUT.GLdouble ->
                         GLUT.GLdouble -> GameObject -> IO()

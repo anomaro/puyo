@@ -44,6 +44,8 @@ import qualified Common.DataType   as T
 import qualified Common.Function    as U
 import qualified State.Setting  as V
 
+import qualified Common.PlayerIdentity  as Identity
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --  ó‘Ô‘‚«Š·‚¦
@@ -62,13 +64,11 @@ eat_nextPuyo state n =
 --  ”s–kƒtƒ‰ƒOXV
 --------------------------------------------------------------------------------
 -- ”s–kƒtƒ‰ƒO‚ðXV‚·‚éB
-renewLoseFlag               :: Bool -> T.Territory -> PlayerState -> IO()
+renewLoseFlag   :: Bool -> Identity.Territory -> PlayerState -> IO()
 renewLoseFlag b trt state   =  do
     loseFlag    <- IORF.readIORef refLoseFlag
-    IORF.writeIORef refLoseFlag $ applyTRT trt (const b) loseFlag
+    IORF.writeIORef refLoseFlag $ Identity.apply trt (const b) loseFlag
   where
-    applyTRT T.TerritoryLeft  f (l, r)  = (f l, r  )
-    applyTRT T.TerritoryRight f (l, r)  = (l  , f r)
     refLoseFlag = takeout_loseFlagState state
 
 --------------------------------------------------------------------------------
@@ -78,35 +78,29 @@ renewLoseFlag b trt state   =  do
 renewYokoku :: (T.NumOfPuyo -> T.NumOfPuyo)
             -> (T.NumOfPuyo -> T.NumOfPuyo)
             -> (T.NumOfPuyo -> T.NumOfPuyo)
-            -> T.Territory -> PlayerState -> IO()
+            -> Identity.Territory -> PlayerState -> IO()
 renewYokoku f1 f2 f3 trt state   = do
     yokokuField <- IORF.readIORef $ takeout_yokokuState state
-    IORF.writeIORef (takeout_yokokuState state) $ applyTRT trt yokokuField
+    IORF.writeIORef (takeout_yokokuState state) $ Identity.apply trt f yokokuField
   where
-    applyTRT T.TerritoryLeft  (a, b) = (apply a, b      )
-    applyTRT T.TerritoryRight (a, b) = (a      , apply b)
-    apply (n1, n2, n3) = (fmap f1 n1, fmap f2 n2, fmap f3 n3)
+    f (n1, n2, n3) = (fmap f1 n1, fmap f2 n2, fmap f3 n3)
 
 -- —\‚Õ‚æ‚ðReserve‚©‚çSupply‚ÖˆÚ‚·B
-toSupplyYokoku :: T.Territory -> PlayerState -> IO()
+toSupplyYokoku :: Identity.Territory -> PlayerState -> IO()
 toSupplyYokoku trt state =  do
     yokokuField <- IORF.readIORef stateY
-    IORF.writeIORef stateY $ applyTRT trt shift yokokuField
+    IORF.writeIORef stateY $ Identity.apply trt shift yokokuField
   where
     stateY  = takeout_yokokuState state
-    applyTRT T.TerritoryLeft  f (l, r)  = (f l, r  )
-    applyTRT T.TerritoryRight f (l, r)  = (l  , f r)
     shift (n, Supply n2, Reserve n3)    = (n, Supply $ n2 + n3, Reserve 0)
 
 -- —\‚Õ‚æ‚ðSupply‚©‚çAdvance‚ÖˆÚ‚·B
-toAdvanceYokoku :: T.NumOfPuyo -> T.Territory -> PlayerState -> IO()
+toAdvanceYokoku :: T.NumOfPuyo -> Identity.Territory -> PlayerState -> IO()
 toAdvanceYokoku m trt state =  do
     yokokuField <- IORF.readIORef stateY
-    IORF.writeIORef stateY $ applyTRT trt shift yokokuField
+    IORF.writeIORef stateY $ Identity.apply trt shift yokokuField
   where
     stateY  = takeout_yokokuState state
-    applyTRT T.TerritoryLeft  f (l, r)  = (f l, r  )
-    applyTRT T.TerritoryRight f (l, r)  = (l  , f r)
     shift (Advance n1, Supply n2, n)
         | n2 > m    = (Advance $ n1 + m , Supply $ n2 - m, n)
         | otherwise = (Advance $ n1 + n2, Supply 0       , n)

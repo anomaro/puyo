@@ -11,6 +11,8 @@ import qualified State.Result     as D
 import qualified State.Setting   as V
 import qualified Common.Name     as W
 
+import qualified Common.PlayerIdentity  as Identity
+
 --------------------------------------------------------------------------------
 --  èÍñ 
 --------------------------------------------------------------------------------
@@ -31,8 +33,8 @@ createGameStage gs gdc  =  do
     n2P         <- Q.copy_nextPuyoState n1P
     y           <- Q.create_yokokuState
     l           <- Q.create_loseFlagState
-    state1P     <- Q.create_playerstate W.defaultUser1P gs n1P y l
-    state2P     <- Q.create_playerstate W.defaultUser2P gs n2P y l
+    state1P     <- Q.create_playerstate Identity.defaultUser1P gs n1P y l
+    state2P     <- Q.create_playerstate Identity.defaultUser2P gs n2P y l
     return $ Game Puyopuyo gs (state1P, state2P) gdc
 
 createConfigurationStage    :: V.GameState -> IO GameStage

@@ -8,6 +8,8 @@ module Process.Phase.Fall(
 import Data.List (delete)
 import Control.Monad
 
+import qualified Common.PlayerIdentity  as Identity (against, territory)
+
 import qualified Common.DataType  as T
 import qualified Common.Function    as U
 import qualified State.Setting   as V
@@ -36,8 +38,8 @@ moveYokokuPuyo gs state =  do
     toSupplyYokoku other state
     toAdvanceYokoku yokokuLv3 own state
   where 
-    own     = fst $ get_playerIdentity state
-    other   = U.againstTerritory $ fst $ get_playerIdentity state
+    own     = Identity.territory $ get_playerIdentity state
+    other   = Identity.against own
     -- è¦Î‚Õ‚æ‚ª‚à‚½‚ç‚·‚¨‚¶‚á‚Ü‚Õ‚æ‚Ì—ÊB
     yokokuLv3 = V.yokokuLv3 gs
     
@@ -56,7 +58,7 @@ putOjamaPuyo gs state =  do
     return $ numOfOjama /= 0
     
   where
-    trt         = fst $ get_playerIdentity state
+    trt         = Identity.territory $ get_playerIdentity state
     fieldSizeX  = V.get V.FieldSizeX gs
     sieve n | n > fieldSizeX    = fieldSizeX
             | otherwise         = n

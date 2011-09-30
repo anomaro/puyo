@@ -10,12 +10,14 @@ import qualified Data.Array.IO      as AIO
 import qualified Common.DataType   as T
 import qualified Common.Function    as U
 
+import qualified Common.PlayerIdentity  as Identity
+
 --------------------------------------------------------------------------------
 --  プレイヤー状態
 --------------------------------------------------------------------------------
 -- １人のプレイヤーが保持する状態をひとまとめにしたデータ。
 -- （フィールド状態・操作ぷよ・得点など）
-data PlayerState = PlayerState  T.PlayerIdentity
+data PlayerState = PlayerState  Identity.PlayerIdentity
                                 GamePhaseState      -- ゲーム状態遷移
                                 FieldState          -- フィールド状態
                                 PlayerPuyoState     -- 操作ぷよの状態
@@ -78,7 +80,7 @@ type LoseFlag       = (Bool, Bool)
 --  状態くり抜き
 --------------------------------------------------------------------------------
 -- プレイヤー状態から特定の状態をくり抜く。
-takeout_playerIdentity  :: PlayerState -> T.PlayerIdentity
+takeout_playerIdentity  :: PlayerState -> Identity.PlayerIdentity
 takeout_playerIdentity  (PlayerState pI _ _ _ _ _ _ _)  =  pI
 
 takeout_gamePhaseState  :: PlayerState -> IO GamePhaseState

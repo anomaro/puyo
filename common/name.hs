@@ -29,9 +29,9 @@ amimeTime_land      = 20  * speed   :: T.Time   -- 操作ぷよを着地させたとき。
 amimeTime_drop      = 2   * speed   :: T.Time   -- ちぎり落下のとき。
 amimeTime_erase     = 40  * speed   :: T.Time   -- ぷよ消滅のとき。
 
--- 標準のユーザ
-defaultUser1P   = (T.TerritoryLeft , T.Com T.Pechipechi)    :: T.PlayerIdentity
-defaultUser2P   = (T.TerritoryRight, T.User)                :: T.PlayerIdentity
+---- 標準のユーザ
+--defaultUser1P   = (T.TerritoryLeft , T.Com T.Pechipechi)    :: T.PlayerIdentity
+--defaultUser2P   = (T.TerritoryRight, T.User)                :: T.PlayerIdentity
 
 -- 隕石ぷよのおじゃまぷよの予告段数。
 sizeYyokokuLv3  = 5         :: T.PositionY

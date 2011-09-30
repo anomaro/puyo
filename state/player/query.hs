@@ -53,6 +53,7 @@ import qualified Common.DataType   as T
 import qualified Common.Function    as U
 import qualified State.Setting  as V
 
+import qualified Common.PlayerIdentity  as Identity
 
 (<$<) :: Functor f => (a -> b) -> (c -> f a) -> (c -> f b)
 f <$< g =  fmap f . g
@@ -66,7 +67,7 @@ readField   =  flip AIO.readArray
 --  プレイヤー状態の内容を外部モジュールに伝える。
 --------------------------------------------------------------------------------
 -- プレイヤー識別を伝える。
-get_playerIdentity  :: P'.PlayerState -> T.PlayerIdentity
+get_playerIdentity  :: P'.PlayerState -> Identity.PlayerIdentity
 get_playerIdentity  =  P'.takeout_playerIdentity
 
 -- ゲーム状態を伝える。
@@ -81,36 +82,32 @@ get_nextPuyoColors  =  IORF.readIORef <=< P'.takeout_nextPuyoState
 --  敗北フラグ
 --------------------------------------------------------------------------------
 -- 勝利したプレイヤーを調べる。
-get_whoWins         :: P'.PlayerState -> IO (Maybe T.Territory)
+get_whoWins         :: P'.PlayerState -> IO (Maybe Identity.Territory)
 get_whoWins state   =  do
     loseFlag    <- IORF.readIORef $ P'.takeout_loseFlagState state
     return $ check loseFlag
   where
-    check (False, True)     = Just T.TerritoryLeft
-    check (True,  False)    = Just T.TerritoryRight
+    check (False, True)     = Just Identity.Left
+    check (True,  False)    = Just Identity.Right
     check _                 = Nothing
 
 --------------------------------------------------------------------------------
 --  予告ぷよ
 --------------------------------------------------------------------------------
 -- 実際に降るおじゃまぷよの数を伝える。
-get_fallOjamaPuyo   :: T.Territory -> P'.PlayerState -> IO T.NumOfPuyo
+get_fallOjamaPuyo   :: Identity.Territory -> P'.PlayerState -> IO T.NumOfPuyo
 get_fallOjamaPuyo trt state = do
     yokokuField <- IORF.readIORef $ P'.takeout_yokokuState state
-    return $ get $ (f trt) yokokuField
+    return $ get $ (Identity.pick trt) yokokuField
   where
-    f T.TerritoryLeft   = fst
-    f T.TerritoryRight  = snd
     get (P'.Advance n, _, _)    = n
 
 -- 予告ぷよの数を伝える。
-get_yokoku  :: T.Territory -> P'.PlayerState -> IO T.NumOfPuyo
+get_yokoku  :: Identity.Territory -> P'.PlayerState -> IO T.NumOfPuyo
 get_yokoku trt state =  do
     yokokuField <- IORF.readIORef $ P'.takeout_yokokuState state
-    return $ totalYokoku $ (f trt) yokokuField
+    return $ totalYokoku $ (Identity.pick trt) yokokuField
   where
-    f T.TerritoryLeft   = fst
-    f T.TerritoryRight  = snd
     totalYokoku (P'.Advance n1, P'.Supply n2, P'.Reserve n3) = n1 + n2 + n3
     
 --------------------------------------------------------------------------------
@@ -180,7 +177,8 @@ getPPFlagQuickTurn  (P'.PlayerPuyoInfo _ _ _ _ _ q)    = q :: Bool
 --------------------------------------------------------------------------------
 --  プレイヤー状態初期化
 --------------------------------------------------------------------------------
-create_playerstate      :: T.PlayerIdentity -> V.GameState -> P'.NextPuyoState
+create_playerstate      :: Identity.PlayerIdentity
+                        -> V.GameState -> P'.NextPuyoState
                         -> P'.YokokuState -> P'.LoseFlagState
                         -> IO P'.PlayerState
 create_playerstate pI gs stateN stateY stateL   =  do

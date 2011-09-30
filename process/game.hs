@@ -6,6 +6,8 @@ module Process.Game
     where
 import Data.Maybe (isJust)
 
+import qualified Common.PlayerIdentity  as Identity
+
 import qualified Common.DataType   as T
 import qualified Common.Function    as U ((<-+->))
 import qualified State.Setting   as V (GameState)
@@ -94,9 +96,9 @@ control_playerPuyo stateB gs state = do
       then shift_gamePhase state T.GameOverPhase
       else do
         listB <- I.read_buttonState stateB
-        case snd $ get_playerIdentity state
-          of T.User     -> control_playerPuyo' listB            gs state
-             T.Com name -> control_playerPuyo' I.testButtonList gs state
+        case Identity.player $ get_playerIdentity state
+          of Identity.User     -> control_playerPuyo' listB            gs state
+             Identity.Com name -> control_playerPuyo' I.testButtonList gs state
 
 control_playerPuyo' :: [I.Button] -> V.GameState -> PlayerState -> IO()
 control_playerPuyo' listB gs state = do
@@ -181,7 +183,7 @@ fall_ojamaPuyo gs state =  do
       then shift_gamePhase state T.FallPhase'
       else shift_gamePhase state T.BuildPhase
   where
-    trt = fst $ get_playerIdentity state
+    trt = Identity.territory $ get_playerIdentity state
     
 
 fall_ojamaPuyo' :: V.GameState -> PlayerState -> IO()

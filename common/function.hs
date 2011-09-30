@@ -43,10 +43,10 @@ rotate_direction T.RLeft  T.DDown   = T.DRight
 rotate_direction T.RLeft  T.DRight  = T.DUp
 rotate_direction T.RPoint d         = d
 
--- 自分以外の領域
-againstTerritory :: T.Territory -> T.Territory
-againstTerritory T.TerritoryLeft    = T.TerritoryRight
-againstTerritory T.TerritoryRight   = T.TerritoryLeft
+---- 自分以外の領域
+--againstTerritory :: T.Territory -> T.Territory
+--againstTerritory T.TerritoryLeft    = T.TerritoryRight
+--againstTerritory T.TerritoryRight   = T.TerritoryLeft
 
 --------------------------------------------------------------------------------
 -- オブジェクトがぷよかどうか判定。

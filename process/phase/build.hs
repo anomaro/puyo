@@ -25,8 +25,11 @@ import State.Player.Overwriting (
     )
 
 import qualified Common.DataType   as T (Color, Direction(DUp), AreaPosition)
-import qualified Common.Function   as U (neighbor_area, againstTerritory, isPuyo)
+import qualified Common.Function   as U (neighbor_area, isPuyo)
 import qualified State.Setting  as V 
+
+import qualified Common.PlayerIdentity  as Identity
+
 
 --------------------------------------------------------------------------------
 --  操作ぷよを生成
@@ -45,7 +48,7 @@ build_playerPuyo gs state   =  do
   where
     -- ぷよ生成点
     build_Area  = U.neighbor_area T.DUp $ V.criticalArea gs :: T.AreaPosition
-    trt     = fst $ get_playerIdentity state
+    trt     = Identity.territory $ get_playerIdentity state
 
 -- ネクストぷよの色を調べて取り出す。
 pick_nextPuyoColor  :: P.PlayerState -> IO (T.Color, T.Color)
@@ -66,4 +69,4 @@ checkLose gs state  =  do
     when (U.isPuyo area) $ renewLoseFlag True trt state
     return $ U.isPuyo area
   where
-    trt     = fst $ get_playerIdentity state
+    trt     = Identity.territory $ get_playerIdentity state
