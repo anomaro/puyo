@@ -30,6 +30,7 @@ import State.Player.Overwriting (
     )
 
 import qualified Common.PlayerIdentity  as Identity
+import qualified Common.Area            as Area
 
 import qualified Common.DataType   as T
 import qualified Common.Function    as U
@@ -38,7 +39,6 @@ import qualified Common.Name      as W (
     animeTime_rotate,
     amimeTime_drop,
     amimeTime_land,
-    landingDefauletPower,
     sizeYyokokuLv3,
     )
 import Render.Object
@@ -284,10 +284,10 @@ render_field gs state   =  MND.mapM_ f $ V.fieldArrayIndices gs
     f p =  renew_animationType state p         -- アニメーション状態の更新。 
            >> (matching =<< get_fieldStateArea p state)
       where
-        matching (T.Puyo c T.NotYet T.Normal) = renderColorPuyoLink c T.Normal
-        matching (T.Puyo c T.EraseFlag a)     = renderColorPuyoLink c a
-        matching (T.Puyo c _ a) = render_fieldPuyo gs trt a p $ objPuyo' c []
-        matching (T.Ojama  _ a) = render_fieldPuyo gs trt a p objOjamaPuyo
+        matching (Area.Puyo c Area.NotYet Area.Normal) = renderColorPuyoLink c Area.Normal
+        matching (Area.Puyo c Area.EraseFlag a)     = renderColorPuyoLink c a
+        matching (Area.Puyo c _ a) = render_fieldPuyo gs trt a p $ objPuyo' c []
+        matching (Area.Ojama  _ a) = render_fieldPuyo gs trt a p objOjamaPuyo
         matching _              = return ()
         
         trt = Identity.territory $ get_playerIdentity state
@@ -309,8 +309,8 @@ neighborSameColorPuyo p c state =  do
     ffff    :: T.Direction -> IO[T.Direction]
     ffff d  =  matching =<< get_fieldStateArea (U.neighbor_area d p) state
       where
-        matching (T.Puyo c' T.NotYet T.Normal)  | c == c'   = return [d]
-        matching (T.Puyo c' T.EraseFlag _)      | c == c'   = return [d]
+        matching (Area.Puyo c' Area.NotYet Area.Normal)  | c == c'   = return [d]
+        matching (Area.Puyo c' Area.EraseFlag _)      | c == c'   = return [d]
         matching _                                          = return []
 
 
@@ -318,9 +318,9 @@ neighborSameColorPuyo p c state =  do
 --  エリア描画    
 --------------------------------------------------------------------------------
 -- フィールドのぷよの描画。（色ぷよ・おじゃまぷよ）
-render_fieldPuyo    :: V.GameState -> Identity.Territory -> T.AnimationType 
+render_fieldPuyo    :: V.GameState -> Identity.Territory -> Area.AnimationType 
                     -> T.AreaPosition -> GameObject -> IO()
-render_fieldPuyo gs trt (T.Landing t pow) pos@(y, _) obj   =
+render_fieldPuyo gs trt (Area.Landing t pow) pos@(y, _) obj   =
     render_fieldObject' gs trt pos 0 moveY scaleX scaleY 0 obj
   where
     scaleX  = 1.2 * scaleX'
@@ -335,16 +335,16 @@ render_fieldPuyo gs trt (T.Landing t pow) pos@(y, _) obj   =
             remTime     = abs $ halfTime - fromIntegral t   -- 残り時間
     weaken n t  = n * (t - 1)
     -- 接地面がフィールド下部に近い場合はパワーを弱める。
-    pow'    | height == 0 && pow >= W.landingDefauletPower  = pow - 1
-            | otherwise                                     = pow
+    pow'    | height == 0 && pow >= Area.defauletPower  = pow - 1
+            | otherwise                                 = pow
       where
         height      = fieldSizeY - fromIntegral y - 1   -- 高さ
         fieldSizeY  = fromIntegral $ V.fieldSizeY' gs    
-render_fieldPuyo gs trt (T.Erasing t)   p obj
+render_fieldPuyo gs trt (Area.Erasing t)   p obj
     | t `rem` 8 >= 4    = return ()
     | otherwise         = render_fieldObject gs trt p obj
     
-render_fieldPuyo gs trt (T.Dropping t) p obj =
+render_fieldPuyo gs trt (Area.Dropping t) p obj =
     render_fieldObject' gs trt p 0 moveY 1 1 0 obj
   where
     moveY = fromIntegral W.amimeTime_drop * unitAreaY gs

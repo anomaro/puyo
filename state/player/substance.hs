@@ -11,6 +11,7 @@ import qualified Common.DataType   as T
 import qualified Common.Function    as U
 
 import qualified Common.PlayerIdentity  as Identity
+import qualified Common.Area            as Area
 
 --------------------------------------------------------------------------------
 --  プレイヤー状態
@@ -27,7 +28,7 @@ data PlayerState = PlayerState  Identity.PlayerIdentity
                                 LoseFlagState       -- 敗北フラグ（共有）
 
 type GamePhaseState  = IORF.IORef T.GamePhase 
-type FieldState      = AIO.IOArray T.AreaPosition T.Area 
+type FieldState      = AIO.IOArray T.AreaPosition Area.Area 
 type PlayerPuyoState = IORF.IORef PlayerPuyo  
 data PlayerPuyo
     = NonExistent

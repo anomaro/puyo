@@ -9,22 +9,10 @@ module Process.Phase.Drop
 import Control.Applicative
 import qualified Control.Monad      as MND
 
-import qualified Common.DataType  as T (
-    AreaPosition,
-    PositionY,
-    Area(..),
-    Direction(DUp,DDown),
-    AnimationType(Normal, Dropping),
-    UnionCheck(NotYet),
-    Power,
-    )
-import qualified Common.Function    as U (isPuyo, neighbor_area)
-import qualified State.Setting   as V 
-import qualified Common.Name      as W (
-    animeStartLanding,
-    animeStartDropping,
-    landingDefauletPower,
-    )
+import qualified Common.DataType    as T
+import qualified Common.Function    as U
+import qualified State.Setting      as V 
+import qualified Common.Name        as W
 
 import State.Player.DataType
 import State.Player.Query   (
@@ -39,6 +27,8 @@ import State.Player.Overwriting (
     remove_playerPuyo,
     renew_fieldArea,
     )  
+
+import qualified Common.Area            as Area
 
 --------------------------------------------------------------------------------
 -- 操作ぷよの着地
@@ -57,18 +47,18 @@ land_puyo state =  do
         let pos'@(y',_) = U.neighbor_area d pos
         boolb   <- is_neighborSpace pos  T.DDown state
         boolm   <- is_neighborSpace pos' T.DDown state
-        let powerM = if d == T.DDown then W.landingDefauletPower - 1
-                                     else W.landingDefauletPower
-            powerB = if d == T.DUp   then W.landingDefauletPower - 1
-                                     else W.landingDefauletPower
-            atb = if boolb && d /= T.DDown  then T.Normal
-                                            else W.animeStartLanding powerB
-            atm = if boolm && d /= T.DUp    then T.Normal
-                                            else W.animeStartLanding powerM
+        let powerM = if d == T.DDown then Area.defauletPower - 1
+                                     else Area.defauletPower
+            powerB = if d == T.DUp   then Area.defauletPower - 1
+                                     else Area.defauletPower
+            atb = if boolb && d /= T.DDown  then Area.Normal
+                                            else Area.animeStartLanding powerB
+            atm = if boolm && d /= T.DUp    then Area.Normal
+                                            else Area.animeStartLanding powerM
         MND.when (y  >= V.hidingFieldRank)
-                 $ renew_fieldArea state pos  $ T.Puyo cb T.NotYet atb
+                 $ renew_fieldArea state pos  $ Area.Puyo cb Area.NotYet atb
         MND.when (y' >= V.hidingFieldRank)
-                 $ renew_fieldArea state pos' $ T.Puyo cm T.NotYet atm
+                 $ renew_fieldArea state pos' $ Area.Puyo cm Area.NotYet atm
         
         areaB   <- get_fieldStateArea (U.neighbor_area T.DDown pos ) state
         areaM   <- get_fieldStateArea (U.neighbor_area T.DDown pos') state
@@ -99,15 +89,15 @@ drop_puyo gs state  =
             areaObj    <- get_fieldStateArea p state 
             flagSpace  <- is_neighborSpace p T.DDown state
             
-            if flagSpace && U.isPuyo areaObj 
+            if flagSpace && Area.isPuyo areaObj 
               then do 
                 renew_fieldArea state p' areaObj
-                renew_fieldArea state p  T.Space
+                renew_fieldArea state p  Area.Space
                 flagSpace'  <- is_neighborSpace p' T.DDown state
                 areaObj''   <- get_fieldStateArea p'' state
                 if flagSpace' || maching areaObj''
                   then do
-                    rewrite_animationType state p' areaObj W.animeStartDropping
+                    rewrite_animationType state p' areaObj Area.animeStartDropping
                   else do
                     rewrite_animationType state p' areaObj defaultLanding
                     transmitDefault areaObj'' p'' state   
@@ -117,40 +107,40 @@ drop_puyo gs state  =
           where
             p'@(y', _)  = U.neighbor_area T.DDown p
             p'' = U.neighbor_area T.DDown p'
-            maching (T.Puyo  _ _ (T.Dropping _ ))   = True
-            maching (T.Ojama   _ (T.Dropping _ ))   = True
-            maching _                               = False
+            maching (Area.Puyo  _ _ (Area.Dropping _ )) = True
+            maching (Area.Ojama   _ (Area.Dropping _ )) = True
+            maching _                                   = False
 
 --------------------------------------------------------------------------------
 -- アニメーションタイプ
 --------------------------------------------------------------------------------
 -- アニメーションタイプを書き換える。
 rewrite_animationType   :: PlayerState -> T.AreaPosition 
-                        -> T.Area -> T.AnimationType -> IO()
-rewrite_animationType state p (T.Puyo c u _) at
-    =  renew_fieldArea state p $ T.Puyo c u at
-rewrite_animationType state p (T.Ojama  u _) at
-    =  renew_fieldArea state p $ T.Ojama u at
+                        -> Area.Area -> Area.AnimationType -> IO()
+rewrite_animationType state p (Area.Puyo c u _) at
+    =  renew_fieldArea state p $ Area.Puyo c u at
+rewrite_animationType state p (Area.Ojama  u _) at
+    =  renew_fieldArea state p $ Area.Ojama u at
 rewrite_animationType _ _ _ _ 
     =  return ()
 
 -- 落下があった列のぷよをアニメーションさせる。
-transmitAnimeLanding    :: T.Power -> T.Area -> T.AreaPosition -> PlayerState 
+transmitAnimeLanding    :: Area.Power -> Area.Area -> T.AreaPosition -> PlayerState 
                         -> IO()
 transmitAnimeLanding 0 _                          _ _     = return ()
-transmitAnimeLanding a area@(T.Puyo _ _ T.Normal) p state = tAL a area p state
-transmitAnimeLanding a area@(T.Ojama  _ T.Normal) p state = tAL a area p state
-transmitAnimeLanding _ _                          _ _     = return ()
+transmitAnimeLanding a area@(Area.Puyo _ _ Area.Normal) p state = tAL a area p state
+transmitAnimeLanding a area@(Area.Ojama  _ Area.Normal) p state = tAL a area p state
+transmitAnimeLanding _ _                                _ _     = return ()
     
 tAL a area p state = do
-    rewrite_animationType state p area $ W.animeStartLanding (a - 1)
+    rewrite_animationType state p area $ Area.animeStartLanding (a - 1)
     area'   <- get_fieldStateArea p' state
     transmitAnimeLanding (a - 1) area' p' state
   where
     p' = U.neighbor_area T.DDown p
 
 -- transmitAnimeLandingの標準化
-transmitDefault :: T.Area -> T.AreaPosition -> PlayerState -> IO()
-transmitDefault a p s = transmitAnimeLanding W.landingDefauletPower a p s
+transmitDefault :: Area.Area -> T.AreaPosition -> PlayerState -> IO()
+transmitDefault a p s = transmitAnimeLanding Area.defauletPower a p s
 
-defaultLanding  = W.animeStartLanding W.landingDefauletPower
+defaultLanding  = Area.animeStartLanding Area.defauletPower

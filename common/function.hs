@@ -43,23 +43,6 @@ rotate_direction T.RLeft  T.DDown   = T.DRight
 rotate_direction T.RLeft  T.DRight  = T.DUp
 rotate_direction T.RPoint d         = d
 
----- 自分以外の領域
---againstTerritory :: T.Territory -> T.Territory
---againstTerritory T.TerritoryLeft    = T.TerritoryRight
---againstTerritory T.TerritoryRight   = T.TerritoryLeft
-
---------------------------------------------------------------------------------
--- オブジェクトがぷよかどうか判定。
-isPuyo                  :: T.Area -> Bool
-isPuyo (T.Puyo  _ _ _)  =  True
-isPuyo (T.Ojama   _ _)  =  True
-isPuyo _                =  False
-
--- 色ぷよかどうか判定。
-is_colorPuyo                :: T.Area -> Bool
-is_colorPuyo (T.Puyo _ _ _) =  True
-is_colorPuyo _              =  False
-
 --------------------------------------------------------------------------------
 -- 指定した方向に隣接するフィールド座標を得る。（境界チェックをしない）
 -- ゲーム環境を知らない関数が、フィールド可視範囲内でこの関数を使用場合に使う。

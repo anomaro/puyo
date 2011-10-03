@@ -25,11 +25,11 @@ import State.Player.Overwriting (
     )
 
 import qualified Common.DataType   as T (Color, Direction(DUp), AreaPosition)
-import qualified Common.Function   as U (neighbor_area, isPuyo)
+import qualified Common.Function   as U
 import qualified State.Setting  as V 
 
 import qualified Common.PlayerIdentity  as Identity
-
+import qualified Common.Area            as Area     (isPuyo)
 
 --------------------------------------------------------------------------------
 --  ‘€ì‚Õ‚æ‚ð¶¬
@@ -66,7 +66,7 @@ pick_nextPuyoColor state    = do
 checkLose           :: V.GameState -> P.PlayerState -> IO Bool
 checkLose gs state  =  do
     area <- get_fieldStateArea (V.criticalArea gs) state
-    when (U.isPuyo area) $ renewLoseFlag True trt state
-    return $ U.isPuyo area
+    when (Area.isPuyo area) $ renewLoseFlag True trt state
+    return $ Area.isPuyo area
   where
     trt     = Identity.territory $ get_playerIdentity state

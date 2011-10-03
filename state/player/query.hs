@@ -54,6 +54,7 @@ import qualified Common.Function    as U
 import qualified State.Setting  as V
 
 import qualified Common.PlayerIdentity  as Identity
+import qualified Common.Area            as Area
 
 (<$<) :: Functor f => (a -> b) -> (c -> f a) -> (c -> f b)
 f <$< g =  fmap f . g
@@ -123,13 +124,13 @@ get_score state =  do
 --  フィールドの状態取得
 --------------------------------------------------------------------------------
 -- 指定したエリアのフィールドのオブジェクトの種類を伝える。
-get_fieldStateArea      :: T.AreaPosition -> P'.PlayerState -> IO T.Area
+get_fieldStateArea      :: T.AreaPosition -> P'.PlayerState -> IO Area.Area
 get_fieldStateArea p    =  readField p <=< P'.takeout_fieldstate
                              
 -- 指定した方向に隣接するエリアのオブジェクトが、空白かどうか判定。
 is_neighborSpace :: T.AreaPosition -> T.Direction -> P'.PlayerState -> IO Bool
 is_neighborSpace p d =
-    (T.Space ==) <$< readField (U.neighbor_area d p) <=< P'.takeout_fieldstate
+    Area.isSpace <$< readField (U.neighbor_area d p) <=< P'.takeout_fieldstate
 
 --------------------------------------------------------------------------------
 --  操作ぷよの状態取得
@@ -200,7 +201,7 @@ create_playerstate pI gs stateN stateY stateL   =  do
     -- フィールド状態の可変配列を作成する。
     create_fieldstate :: IO P'.FieldState
     create_fieldstate = 
-        AIO.newArray ((1, 1), (V.fieldSizeY' gs, V.fieldSizeX' gs)) T.Space
+        AIO.newArray ((1, 1), (V.fieldSizeY' gs, V.fieldSizeX' gs)) Area.initialSnd
         >>= \stateF -> build_wall stateF    -- 壁オブジェクトを作る。
         >> return stateF
       where
@@ -210,9 +211,9 @@ create_playerstate pI gs stateN stateY stateL   =  do
             writeStroke_field stateF walls (fieldArray_indicesX $ V.fieldSizeX' gs)
             writeStroke_field stateF walls (fieldArray_indicesX 1)
           where
-            walls = repeat T.Wall
+            walls = repeat Area.initialFst
             -- フィールドの、リストから得た座標を特定のオブジェクトに書き換える。
-            writeStroke_field :: P'.FieldState -> [T.Area] -> [T.AreaPosition] -> IO()
+            writeStroke_field :: P'.FieldState -> [Area.Area] -> [T.AreaPosition] -> IO()
             writeStroke_field _      _      []      = return ()
             writeStroke_field _      []     _       = return ()
             writeStroke_field stateF (a:as) (p:ps)  =

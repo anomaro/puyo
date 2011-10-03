@@ -9,6 +9,7 @@ import Data.List (delete)
 import Control.Monad
 
 import qualified Common.PlayerIdentity  as Identity (against, territory)
+import qualified Common.Area            as Area
 
 import qualified Common.DataType  as T
 import qualified Common.Function    as U
@@ -63,12 +64,11 @@ putOjamaPuyo gs state =  do
     sieve n | n > fieldSizeX    = fieldSizeX
             | otherwise         = n
     targetAreaPosition ns = [(V.hidingFieldRank, x)| x <- ns]
-    defaultOjamaPuyo    = T.Ojama T.NotYet T.Normal
     -- おじゃまぷよのセッティング
     put p   = do
         isSpace <- is_neighborSpace p T.DPoint state
         if isSpace
-          then renew_fieldArea state p defaultOjamaPuyo
+          then renew_fieldArea state p Area.defaultOjamaPuyo
           else when W.flag_oturi $ renewYokoku id (+1) id trt state
             
 

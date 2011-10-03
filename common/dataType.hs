@@ -46,33 +46,6 @@ type NumOfColors    = Int   -- 色の数
 type NumOfChain     = Int   -- 連鎖数
 
 --------------------------------------------------------------------------------
---  エリア
---------------------------------------------------------------------------------
--- エリア（フィールドの１マス分をそう呼ぶことにする）を構成するオブジェクトの種類。
-data Area   = Space
-             | Puyo Color UnionCheck AnimationType
---            | Puyo Color NumOfUnion UnionCheck AnimationType
-            | Ojama UnionCheck AnimationType
-            | Wall
-        deriving (Show, Eq)
-
--- ぷよの結合チェック状態。
-data UnionCheck = NotYet        -- 未調査
-                | Completion    -- 調査完了
-                | EraseFlag     -- 消滅フラグ
-        deriving (Show, Eq)
-        
--- フィールドぷよのアニメーションの状態を表すデータ。
-data AnimationType  = Normal                -- アニメーション無し
-                    | Dropping   Time       -- 落下時
-                    | Landing    Time Power -- 着地時
-                    | Erasing    Time       -- 消滅時
---                    | Projecting Time       -- 消滅予測時
-        deriving (Show, Eq)
-
-type Power  = Double        -- アニメーションの強さ。
-
---------------------------------------------------------------------------------
 --  ゲームの状態遷移
 --------------------------------------------------------------------------------
 -- ゲームの状態遷移を表すデータ。
@@ -86,20 +59,6 @@ data GamePhase  = BuildPhase    -- ぷよ生成
                 | GameOverPhase -- ゲームオーバー
                 | AnimationPhase  Time GamePhase  -- 硬直時間と次の状態遷移
         deriving (Show, Eq)
---------------------------------------------------------------------------------
---  プレイヤー
---------------------------------------------------------------------------------
----- プレイヤーを識別するデータ。
---type PlayerIdentity  = (Territory, Player)
-
----- 表示フィールドを識別するデータ。
---data Territory  = TerritoryLeft
---                | TerritoryRight
---        deriving (Show, Eq)
----- プレイヤーを表すデータ。
---data Player     = User          -- ユーザ
---                | Com ComName   -- コンピュータ　名前
---data ComName    = Pechipechi
 
 --------------------------------------------------------------------------------
 --  スコア

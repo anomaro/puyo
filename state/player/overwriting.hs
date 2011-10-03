@@ -45,6 +45,7 @@ import qualified Common.Function    as U
 import qualified State.Setting  as V
 
 import qualified Common.PlayerIdentity  as Identity
+import qualified Common.Area            as Area
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -170,7 +171,7 @@ infixl 5 .+
 --  フィールド状態更新
 --------------------------------------------------------------------------------
 -- エリアを更新する。
-renew_fieldArea :: PlayerState -> T.AreaPosition -> T.Area -> IO()
+renew_fieldArea :: PlayerState -> T.AreaPosition -> Area.Area -> IO()
 renew_fieldArea state p area    =
     takeout_fieldstate state >>= \stateF -> AIO.writeArray stateF p area
 
@@ -179,18 +180,7 @@ renew_animationType :: PlayerState -> T.AreaPosition -> IO()
 renew_animationType state p =  do
     stateF  <- takeout_fieldstate state
     area    <- get_fieldStateArea p state
-    AIO.writeArray stateF p $ countArea area
-
-countArea :: T.Area -> T.Area
-countArea (T.Puyo c uc at)  = T.Puyo c uc $ countAT at
-countArea (T.Ojama  uc at)  = T.Ojama  uc $ countAT at
-countArea a                 = a
-
-countAT :: T.AnimationType -> T.AnimationType
-countAT ( T.Dropping n   )  | n > 0 = T.Dropping $ n - 1
-countAT ( T.Landing  n p )  | n > 0 = T.Landing  ( n - 1 ) p
-countAT ( T.Erasing  n   )  | n > 0 = T.Erasing  $ n - 1
-countAT _                           = T.Normal
+    AIO.writeArray stateF p $ Area.countAT area
 
 --------------------------------------------------------------------------------
 --  配ぷよ状態更新
