@@ -35,7 +35,7 @@ type Power  = Double        -- アニメーションの強さ。
 --  名前
 --------------------------------------------------------------------------------
 initialFst  = Wall :: Area
-initialSnd  = Wall :: Area
+initialSnd  = Space :: Area
 
 animeStartDropping  =  Dropping amimeTime_drop    :: AnimationType
 animeStartErasing   =  Erasing  amimeTime_erase   :: AnimationType
