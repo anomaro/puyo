@@ -4,6 +4,8 @@ where
 import Common.DataType
 import Common.Name
 
+import Standardizable
+
 --------------------------------------------------------------------------------
 --  型
 --------------------------------------------------------------------------------
@@ -28,6 +30,8 @@ data AnimationType  = Normal                -- アニメーション無し
                     | Erasing    Time       -- 消滅時
 --                    | Projecting Time       -- 消滅予測時
         deriving (Show, Eq)
+instance Standardizable AnimationType where
+    standard        = Normal
 
 type Power  = Double        -- アニメーションの強さ。
 
@@ -37,6 +41,8 @@ type Power  = Double        -- アニメーションの強さ。
 initialFst  = Wall :: Area
 initialSnd  = Wall :: Area
 
+defaultOjamaPuyo    =  defaultState Ojama   :: Area
+
 animeStartDropping  =  Dropping amimeTime_drop    :: AnimationType
 animeStartErasing   =  Erasing  amimeTime_erase   :: AnimationType
 
@@ -44,8 +50,6 @@ animeStartLanding   :: Power  -> AnimationType
 animeStartLanding p =  Landing amimeTime_land p
 
 defauletPower   = 3 :: Power
-
-defaultOjamaPuyo    =  defaultState Ojama   :: Area
 
 --------------------------------------------------------------------------------
 --  関数
@@ -64,11 +68,24 @@ isSpace         :: Area -> Bool
 isSpace Space   =  True
 isSpace _       =  False
 
+-- 部分書き換え
+modifyColor                 :: (Color -> Color) -> Area -> Area
+modifyColor f (Puyo c u a)  =  Puyo (f c) u a
+modifyColor _ area          =  area
+
+modifyUnion                 :: (UnionCheck -> UnionCheck) -> Area -> Area
+modifyUnion f (Puyo c u a)  =  Puyo c (f u) a
+modifyUnion f (Ojama  u a)  =  Ojama  (f u) a
+modifyUnion _ area          =  area
+
+modifyAnime                 :: (AnimationType -> AnimationType) -> Area -> Area
+modifyAnime f (Puyo c u a)  =  Puyo c u (f a)
+modifyAnime f (Ojama  u a)  =  Ojama  u (f a)
+modifyAnime _ area          =  area
+
 -- アニメーション時間をカウント
-countAT                 :: Area -> Area
-countAT (Puyo c uc at)  =  Puyo c uc $ count at
-countAT (Ojama  uc at)  =  Ojama  uc $ count at
-countAT a               =  a
+countAT :: Area -> Area
+countAT = modifyAnime count
 
 count                           :: AnimationType -> AnimationType
 count ( Dropping n   )  | n > 0 =  Dropping $ n - 1
@@ -79,3 +96,23 @@ count _                         =  Normal
 -- デフォルト適用
 defaultState    :: (UnionCheck -> AnimationType -> Area) -> Area
 defaultState    =  ($ Normal) . ($ NotYet)
+
+--------------------------------------------------------------------------------
+--  特殊用途パターンマッチング
+--------------------------------------------------------------------------------
+isNoAnime                                   :: Area -> Bool
+isNoAnime       (Puyo _ _ Normal)           =  True
+isNoAnime       (Ojama  _ Normal)           =  True
+isNoAnime       _                           =  False
+
+isDroppingAnime                             :: Area -> Bool
+isDroppingAnime (Puyo _ _ (Dropping _ ))    =  True
+isDroppingAnime (Ojama  _ (Dropping _ ))    =  True
+isDroppingAnime _                           =  False
+
+
+--------------------------------------------------------------------------------
+--  特殊用途名前
+--------------------------------------------------------------------------------
+landPuyo        :: Color -> AnimationType -> Area
+landPuyo c a    =  Puyo c NotYet a

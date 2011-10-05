@@ -9,6 +9,8 @@ module Process.Phase.Drop
 import Control.Applicative
 import qualified Control.Monad      as MND
 
+import Standardizable
+
 import qualified Common.DataType    as T
 import qualified Common.Function    as U
 import qualified State.Setting      as V 
@@ -51,14 +53,13 @@ land_puyo state =  do
                                      else Area.defauletPower
             powerB = if d == T.DUp   then Area.defauletPower - 1
                                      else Area.defauletPower
-            atb = if boolb && d /= T.DDown  then Area.Normal
-                                            else Area.animeStartLanding powerB
-            atm = if boolm && d /= T.DUp    then Area.Normal
-                                            else Area.animeStartLanding powerM
+            atb = (Area.animeStartLanding powerB) `orStandardIf` not (boolb && d /= T.DDown)
+            atm = (Area.animeStartLanding powerM) `orStandardIf` not (boolm && d /= T.DUp)
+        
         MND.when (y  >= V.hidingFieldRank)
-                 $ renew_fieldArea state pos  $ Area.Puyo cb Area.NotYet atb
+                 $ renew_fieldArea state pos  $ Area.landPuyo cb atb
         MND.when (y' >= V.hidingFieldRank)
-                 $ renew_fieldArea state pos' $ Area.Puyo cm Area.NotYet atm
+                 $ renew_fieldArea state pos' $ Area.landPuyo cm atm
         
         areaB   <- get_fieldStateArea (U.neighbor_area T.DDown pos ) state
         areaM   <- get_fieldStateArea (U.neighbor_area T.DDown pos') state
@@ -95,7 +96,7 @@ drop_puyo gs state  =
                 renew_fieldArea state p  Area.Space
                 flagSpace'  <- is_neighborSpace p' T.DDown state
                 areaObj''   <- get_fieldStateArea p'' state
-                if flagSpace' || maching areaObj''
+                if flagSpace' || Area.isDroppingAnime areaObj''
                   then do
                     rewrite_animationType state p' areaObj Area.animeStartDropping
                   else do
@@ -107,9 +108,6 @@ drop_puyo gs state  =
           where
             p'@(y', _)  = U.neighbor_area T.DDown p
             p'' = U.neighbor_area T.DDown p'
-            maching (Area.Puyo  _ _ (Area.Dropping _ )) = True
-            maching (Area.Ojama   _ (Area.Dropping _ )) = True
-            maching _                                   = False
 
 --------------------------------------------------------------------------------
 -- アニメーションタイプ
@@ -117,21 +115,19 @@ drop_puyo gs state  =
 -- アニメーションタイプを書き換える。
 rewrite_animationType   :: PlayerState -> T.AreaPosition 
                         -> Area.Area -> Area.AnimationType -> IO()
-rewrite_animationType state p (Area.Puyo c u _) at
-    =  renew_fieldArea state p $ Area.Puyo c u at
-rewrite_animationType state p (Area.Ojama  u _) at
-    =  renew_fieldArea state p $ Area.Ojama u at
-rewrite_animationType _ _ _ _ 
-    =  return ()
+rewrite_animationType state p area at
+    | Area.isPuyo area
+                = renew_fieldArea state p $ Area.modifyAnime (const at) area
+    | otherwise = return ()
+
 
 -- 落下があった列のぷよをアニメーションさせる。
 transmitAnimeLanding    :: Area.Power -> Area.Area -> T.AreaPosition -> PlayerState 
                         -> IO()
-transmitAnimeLanding 0 _                          _ _     = return ()
-transmitAnimeLanding a area@(Area.Puyo _ _ Area.Normal) p state = tAL a area p state
-transmitAnimeLanding a area@(Area.Ojama  _ Area.Normal) p state = tAL a area p state
-transmitAnimeLanding _ _                                _ _     = return ()
-    
+transmitAnimeLanding 0 _     _ _    = return ()
+transmitAnimeLanding a area p state = MND.when (Area.isNoAnime area)
+                                        $ tAL a area p state
+
 tAL a area p state = do
     rewrite_animationType state p area $ Area.animeStartLanding (a - 1)
     area'   <- get_fieldStateArea p' state
@@ -141,6 +137,6 @@ tAL a area p state = do
 
 -- transmitAnimeLandingの標準化
 transmitDefault :: Area.Area -> T.AreaPosition -> PlayerState -> IO()
-transmitDefault a p s = transmitAnimeLanding Area.defauletPower a p s
+transmitDefault =  transmitAnimeLanding Area.defauletPower
 
 defaultLanding  = Area.animeStartLanding Area.defauletPower
