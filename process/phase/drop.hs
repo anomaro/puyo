@@ -93,7 +93,7 @@ drop_puyo gs state  =
             if flagSpace && Area.isPuyo areaObj 
               then do 
                 renew_fieldArea state p' areaObj
-                renew_fieldArea state p  Area.Space
+                renew_fieldArea state p  standard
                 flagSpace'  <- is_neighborSpace p' T.DDown state
                 areaObj''   <- get_fieldStateArea p'' state
                 if flagSpace' || Area.isDroppingAnime areaObj''

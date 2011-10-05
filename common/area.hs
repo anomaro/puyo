@@ -5,6 +5,7 @@ import Common.DataType
 import Common.Name
 
 import Standardizable
+import qualified State.Setting  as V
 
 --------------------------------------------------------------------------------
 --  型
@@ -16,13 +17,17 @@ data Area
     | Ojama {                 union :: UnionCheck, anime :: AnimationType }
     | Wall
         deriving (Show, Eq)
+instance Standardizable Area where
+    standard        = Space
 
 -- ぷよの結合チェック状態。
 data UnionCheck = NotYet        -- 未調査
                 | Completion    -- 調査完了
                 | EraseFlag     -- 消滅フラグ
         deriving (Show, Eq)
-        
+instance Standardizable UnionCheck where
+    standard        = NotYet
+
 -- フィールドぷよのアニメーションの状態を表すデータ。
 data AnimationType  = Normal                -- アニメーション無し
                     | Dropping   Time       -- 落下時
@@ -116,3 +121,42 @@ isDroppingAnime _                           =  False
 --------------------------------------------------------------------------------
 landPuyo        :: Color -> AnimationType -> Area
 landPuyo c a    =  Puyo c NotYet a
+
+eracingPuyo             :: Maybe Color -> Area
+eracingPuyo Nothing     =  Ojama  EraseFlag animeStartErasing
+eracingPuyo (Just c)    =  Puyo c EraseFlag animeStartErasing
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+--  
+--------------------------------------------------------------------------------
+-- 対象のエリアが結合チェック・ぷよ消滅の対象かどうか判定。
+isTarget :: Area -> Color -> AreaPosition -> UnionCheck -> Bool
+isTarget (Puyo c uc _)          c'         (y, _) uc'
+  | y >= V.topFieldRank && uc == uc'    = c' == AnyColor || c == c'
+isTarget (Ojama  EraseFlag _) AnyColor (y, _) EraseFlag
+                                        = y >= V.topFieldRank
+isTarget _ _ _ _                        = False
+
+isUnionCheck                    :: Area -> AreaPosition -> Maybe Color -> Bool
+isUnionCheck area p Nothing     =  isTarget area AnyColor p NotYet
+isUnionCheck area p (Just c)    =  isTarget area c        p NotYet
+
+isUnionCheckFinished  :: Area -> AreaPosition -> Maybe Color -> Bool
+isUnionCheckFinished  area p Nothing    =  isTarget area AnyColor p Completion
+isUnionCheckFinished  area p (Just c)   =  isTarget area c        p Completion
+
+isReplacedSpace         :: Area -> AreaPosition -> Bool
+isReplacedSpace area p  =  isTarget area AnyColor p EraseFlag
+
+isEraseOjamaPuyo                    :: Area -> Bool
+isEraseOjamaPuyo (Ojama NotYet _)   =  True
+isEraseOjamaPuyo _                  =  False
+
+unionCheckCompletion    :: Area -> Area
+unionCheckCompletion    =  modifyUnion (const Completion)
