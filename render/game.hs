@@ -181,7 +181,6 @@ render_fallPoint gs state   =  do
                                 then U.neighbor_area T.DUp bottomPosM
                                 else bottomPosM         
                                ) $ objFallPoint cm
-    
     return ()
   where
     -- その列の接地エリア
@@ -284,35 +283,29 @@ render_field gs state   =  MND.mapM_ f $ V.fieldArrayIndices gs
     f p =  renew_animationType state p         -- アニメーション状態の更新。 
            >> (matching =<< get_fieldStateArea p state)
       where
-        matching (Area.Puyo c Area.NotYet Area.Normal) = renderColorPuyoLink c Area.Normal
-        matching (Area.Puyo c Area.EraseFlag a)     = renderColorPuyoLink c a
-        matching (Area.Puyo c _ a) = render_fieldPuyo gs trt a p $ objPuyo' c []
-        matching (Area.Ojama  _ a) = render_fieldPuyo gs trt a p objOjamaPuyo
-        matching _              = return ()
-        
+        matching a
+          | Area.is_colorPuyo a = renderColorPuyoLink a (Area.anime a)
+          | Area.isPuyo a   = render_fieldPuyo gs trt (Area.anime a) p objOjamaPuyo
+          | otherwise       = return ()
         trt = Identity.territory $ get_playerIdentity state
-        renderColorPuyoLink color animeTime = 
-            neighborSameColorPuyo p color state
-            >>= render_fieldPuyo gs trt animeTime p . objPuyo' color 
+        renderColorPuyoLink area animeTime = 
+            neighborSameColorPuyo area p state
+            >>= render_fieldPuyo gs trt animeTime p . objPuyo' (Area.color area)
 
 -- 隣接したエリアを調べて、同じ色のぷよがあった方向のリストを得る。
-neighborSameColorPuyo           :: T.AreaPosition -> T.Color -> PlayerState 
+neighborSameColorPuyo           :: Area.Area -> T.AreaPosition -> PlayerState 
                                 -> IO[T.Direction]
-neighborSameColorPuyo p c state =  do
-    right   <- ffff T.DRight
-    down    <- ffff T.DDown
-    left    <- ffff T.DLeft
-    up      <- ffff T.DUp
-    return $ right ++ down ++ left ++ up
+neighborSameColorPuyo area p state
+  | not (Area.isLink area) = return []
+  | otherwise              = MND.foldM ffff [] directions
   where
-    directions = [T.DRight, T.DDown, T.DLeft, T.DUp] 
-    ffff    :: T.Direction -> IO[T.Direction]
-    ffff d  =  matching =<< get_fieldStateArea (U.neighbor_area d p) state
-      where
-        matching (Area.Puyo c' Area.NotYet Area.Normal)  | c == c'   = return [d]
-        matching (Area.Puyo c' Area.EraseFlag _)      | c == c'   = return [d]
-        matching _                                          = return []
-
+    directions = [T.DRight, T.DDown, T.DLeft, T.DUp]
+    ffff    :: [T.Direction] -> T.Direction -> IO[T.Direction]
+    ffff acc d  =  do
+        area' <- get_fieldStateArea (U.neighbor_area d p) state
+        if (Area.isLink area' && Area.color area == Area.color area')
+          then return (d : acc)
+          else return acc
 
 --------------------------------------------------------------------------------
 --  エリア描画    
@@ -320,37 +313,14 @@ neighborSameColorPuyo p c state =  do
 -- フィールドのぷよの描画。（色ぷよ・おじゃまぷよ）
 render_fieldPuyo    :: V.GameState -> Identity.Territory -> Area.AnimationType 
                     -> T.AreaPosition -> GameObject -> IO()
-render_fieldPuyo gs trt (Area.Landing t pow) pos@(y, _) obj   =
-    render_fieldObject' gs trt pos 0 moveY scaleX scaleY 0 obj
-  where
-    scaleX  = 1.2 * scaleX'
-    moveY   = - unitAreaY gs / (scaleY * 4) * ( pow' )
-    scaleY  = recip scaleX'
-    scaleX' = (sqrt $ 1.01 * power - 1) * timeCoefficient + 1
-      where
-        power       = 1.1 + weaken 0.1 pow'
-        timeCoefficient = ((halfTime - remTime) / halfTime) ^ 2 -- 時間係数
-          where 
-            halfTime    = fromIntegral W.amimeTime_land / 2 + 1
-            remTime     = abs $ halfTime - fromIntegral t   -- 残り時間
-    weaken n t  = n * (t - 1)
-    -- 接地面がフィールド下部に近い場合はパワーを弱める。
-    pow'    | height == 0 && pow >= Area.defauletPower  = pow - 1
-            | otherwise                                 = pow
+render_fieldPuyo gs trt anime pos@(y, _) obj
+    = case Area.morph anime height of
+        Nothing -> return ()
+        Just ff -> ff (render_fieldObject' gs trt pos) $ obj
       where
         height      = fieldSizeY - fromIntegral y - 1   -- 高さ
-        fieldSizeY  = fromIntegral $ V.fieldSizeY' gs    
-render_fieldPuyo gs trt (Area.Erasing t)   p obj
-    | t `rem` 8 >= 4    = return ()
-    | otherwise         = render_fieldObject gs trt p obj
-    
-render_fieldPuyo gs trt (Area.Dropping t) p obj =
-    render_fieldObject' gs trt p 0 moveY 1 1 0 obj
-  where
-    moveY = fromIntegral W.amimeTime_drop * unitAreaY gs
-                 / fromIntegral W.amimeTime_drop
-render_fieldPuyo gs trt _               p obj = 
-    render_fieldObject gs trt p obj
+        fieldSizeY  = fromIntegral $ V.fieldSizeY' gs 
+
 
 -- フィールド座標とオブジェクトを指定して、その位置に描画する。
 render_fieldObject  :: V.GameState -> Identity.Territory -> T.AreaPosition
@@ -368,4 +338,5 @@ render_fieldObject' gs trt (y, x) mx my sx sy r obj = do
         posX = field_pointX trt gs + (unitAreaX gs * (x' - 1) ) * 2
         sx'  = sx * reviseViewSize gs
         sy'  = sy * reviseViewSize gs
-    render_gameobject' (GLUT.Vector3 (posX + mx) (posY + my) 0) sx' sy' r obj
+        my'  = my * unitAreaY gs
+    render_gameobject' (GLUT.Vector3 (posX + mx) (posY + my') 0) sx' sy' r obj

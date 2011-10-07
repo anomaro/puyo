@@ -1,11 +1,54 @@
 module Common.Area
+( Area
+, color
+, anime
+
+, UnionCheck
+, AnimationType
+, Power
+
+, initialFst
+, initialSnd
+, defaultOjamaPuyo
+, animeStartDropping
+, animeStartErasing
+, animeStartLanding
+, defauletPower
+
+, isPuyo
+, is_colorPuyo
+, isSpace
+, modifyColor
+, modifyUnion
+, modifyAnime
+, countAT
+
+, isNoAnime
+, isDroppingAnime
+
+, eracingPuyo
+
+, isUnionCheck
+, isUnionCheckFinished
+, isReplacedSpace
+, isEraseOjamaPuyo
+, unionCheckCompletion
+
+, isLink
+, morph
+
+, landPuyo
+)
 where
 
-import Common.DataType
-import Common.Name
+import Data.Maybe (fromJust)
 
 import Standardizable
+import Common.DataType
+import Common.Name
 import qualified State.Setting  as V
+
+import qualified Common.Name      as W
 
 --------------------------------------------------------------------------------
 --  型
@@ -119,40 +162,28 @@ isDroppingAnime _                           =  False
 --------------------------------------------------------------------------------
 --  特殊用途名前
 --------------------------------------------------------------------------------
-landPuyo        :: Color -> AnimationType -> Area
-landPuyo c a    =  Puyo c NotYet a
-
 eracingPuyo             :: Maybe Color -> Area
 eracingPuyo Nothing     =  Ojama  EraseFlag animeStartErasing
 eracingPuyo (Just c)    =  Puyo c EraseFlag animeStartErasing
 
-
-
-
-
-
-
 --------------------------------------------------------------------------------
 --  
 --------------------------------------------------------------------------------
--- 対象のエリアが結合チェック・ぷよ消滅の対象かどうか判定。
-isTarget :: Area -> Color -> AreaPosition -> UnionCheck -> Bool
-isTarget (Puyo c uc _)          c'         (y, _) uc'
-  | y >= V.topFieldRank && uc == uc'    = c' == AnyColor || c == c'
-isTarget (Ojama  EraseFlag _) AnyColor (y, _) EraseFlag
-                                        = y >= V.topFieldRank
-isTarget _ _ _ _                        = False
+isUnionCheck            :: Maybe Color -> Area -> AreaPosition -> Bool
+isUnionCheck            =  isTarget NotYet
 
-isUnionCheck                    :: Area -> AreaPosition -> Maybe Color -> Bool
-isUnionCheck area p Nothing     =  isTarget area AnyColor p NotYet
-isUnionCheck area p (Just c)    =  isTarget area c        p NotYet
-
-isUnionCheckFinished  :: Area -> AreaPosition -> Maybe Color -> Bool
-isUnionCheckFinished  area p Nothing    =  isTarget area AnyColor p Completion
-isUnionCheckFinished  area p (Just c)   =  isTarget area c        p Completion
+isUnionCheckFinished    :: Maybe Color -> Area -> AreaPosition -> Bool
+isUnionCheckFinished    =  isTarget Completion
 
 isReplacedSpace         :: Area -> AreaPosition -> Bool
-isReplacedSpace area p  =  isTarget area AnyColor p EraseFlag
+isReplacedSpace         =  isTarget EraseFlag Nothing
+
+-- 対象のエリアが結合チェック・消滅の対象かどうか判定。
+isTarget :: UnionCheck -> Maybe Color -> Area -> AreaPosition -> Bool
+isTarget u c (Puyo c' u' _) (y, _) | y >= V.topFieldRank && u' == u
+        = c == Nothing || c' == fromJust c
+isTarget EraseFlag Nothing (Ojama EraseFlag _)  (y, _)  = y >= V.topFieldRank
+isTarget _ _ _ _                                        = False
 
 isEraseOjamaPuyo                    :: Area -> Bool
 isEraseOjamaPuyo (Ojama NotYet _)   =  True
@@ -160,3 +191,42 @@ isEraseOjamaPuyo _                  =  False
 
 unionCheckCompletion    :: Area -> Area
 unionCheckCompletion    =  modifyUnion (const Completion)
+
+--------------------------------------------------------------------------------
+--  render
+--------------------------------------------------------------------------------
+isLink                          :: Area -> Bool
+isLink (Puyo _ u Normal)        =  u == NotYet  || u == EraseFlag
+isLink (Puyo _ u (Erasing _))   =  u == NotYet  || u == EraseFlag
+isLink _                        =  False
+
+type  PartialMorph a = Double -> Double -> Double -> Double -> Double -> a
+morph       :: AnimationType -> PositionY -> Maybe ( PartialMorph a  -> a )
+morph (Landing t pow) height    
+    = Just (($ 0) . ($ scaleY) . ($ 1.2 * scaleX) . ($ moveY) . ($ 0))
+      where
+        moveY   = - 1 / (scaleY * 4) * ( pow' )
+        scaleY  = recip scaleX
+        scaleX  = (sqrt $ 1.01 * power - 1) * timeCoefficient + 1
+          where
+            power           = 1.1 + 0.1 * (pow' - 1)
+            timeCoefficient = ((halfTime - remTime) / halfTime) ^ 2 -- 時間係数
+              where 
+                halfTime    = fromIntegral W.amimeTime_land / 2 + 1
+                remTime     = abs $ halfTime - fromIntegral t   -- 残り時間
+        pow'    | height == 0 && pow >= defauletPower   = pow - 1
+                | otherwise                             = pow
+morph (Erasing t)     _
+    | t `rem` 8 >= 4            = Nothing
+morph (Dropping t)    _         = Just (($ 0) . ($ 1) . ($ 1) . ($ mY) . ($ 0))
+    where mY = fromIntegral W.amimeTime_drop * 1 / fromIntegral W.amimeTime_drop
+morph _ _                       = Just (($ 0) . ($ 1) . ($ 1) . ($ 0) . ($ 0))
+
+--------------------------------------------------------------------------------
+--  drop
+--------------------------------------------------------------------------------
+landPuyo    :: Color -> AreaPosition -> Direction -> Bool -> (Area, Power)
+landPuyo col pos@(y, _) dir isNeighborSpace = (Puyo col NotYet anime, power)
+  where
+    anime   = (animeStartLanding power) `orStandardIf` not (isNeighborSpace && dir /= DDown)
+    power   = if dir == DUp then defauletPower - 1 else defauletPower

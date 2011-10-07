@@ -33,7 +33,7 @@ erase_puyo gs state =  do
     f :: Bool -> T.AreaPosition -> IO Bool
     f b p = do
         area  <- get_fieldStateArea p state 
-        numUnion    <- if Area.isUnionCheck area p Nothing
+        numUnion    <- if Area.isUnionCheck Nothing area p
                          then check_union state p
                          else return 0
         bool        <- if numUnion < V.get V.ErasePuyo gs
@@ -41,7 +41,7 @@ erase_puyo gs state =  do
                          else do
                             area <- get_fieldStateArea p state
                             erase_unionPuyo state p
-                            renewScoreCalculation id (numUnion:) (Area.color area :) state 
+                            renewScoreCalculation id (numUnion :) (Area.color area :) state 
                             return True
         off_unionCheck state p
         return $ b || bool
@@ -72,7 +72,7 @@ rewriteSpase_puyo gs state  =  do
 off_unionCheck :: PlayerState -> T.AreaPosition -> IO()
 off_unionCheck state p = do
     area <- get_fieldStateArea p state
-    MND.when (Area.isUnionCheckFinished area p Nothing)
+    MND.when (Area.isUnionCheckFinished Nothing area p)
         $ renew_fieldArea state p $ Area.modifyUnion (const standard) area
 
 -- 結合しているぷよを消滅させる。（消滅フラグを立てる。）
@@ -86,7 +86,7 @@ erase_unionPuyo state p = do
     fff color d = do
         area    <- get_fieldStateArea p' state
         MND.when (Area.isEraseOjamaPuyo area)   $ eraseOjamaPuyo  state p
-        MND.when (Area.isUnionCheckFinished area p' (Just color)) 
+        MND.when (Area.isUnionCheckFinished (Just color) area p') 
                                                 $ erase_unionPuyo state p'
       where
         p'  = U.neighbor_area d p
@@ -105,7 +105,7 @@ check_union state p    = do
     fff :: T.Color -> T.NumOfUnion -> T.Direction -> IO T.NumOfUnion
     fff color n d = do
         area    <- get_fieldStateArea p' state
-        if Area.isUnionCheck area p' (Just color) 
+        if Area.isUnionCheck (Just color) area p'
           then check_union state p' >>= return . (+ n)
           else return n
       where
