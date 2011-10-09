@@ -11,6 +11,7 @@ import qualified Control.Monad      as MND
 import qualified Common.PlayerIdentity  as Identity (against, territory)
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
+import qualified Common.Score           as Score
 
 import qualified Common.DataType   as T
 import qualified Common.Function    as U
@@ -28,7 +29,7 @@ import Standardizable
 -- 結合状態を調べてぷよを消滅させる。ぷよが消えた場合True
 erase_puyo          :: V.GameState -> PlayerState -> IO Bool
 erase_puyo gs state =  do
-    renewScoreCalculation (1+) (const []) (const []) state
+    renewScore Score.expandChain state
     MND.foldM f False $ V.fieldArrayIndices gs
   where
     f :: Bool -> T.AreaPosition -> IO Bool
@@ -37,13 +38,13 @@ erase_puyo gs state =  do
         numUnion    <- if Area.isUnionCheck Nothing area p
                          then check_union state p
                          else return 0
-        bool        <- if numUnion < V.get V.ErasePuyo gs
-                         then return False
-                         else do
-                            area <- get_fieldStateArea p state
-                            erase_unionPuyo state p
-                            renewScoreCalculation id (numUnion :) (Area.color area :) state 
-                            return True
+        bool    <- if numUnion < V.get V.ErasePuyo gs
+                 then return False
+                 else do
+                area <- get_fieldStateArea p state
+                erase_unionPuyo state p
+                renewScore (Score.expandUniCol numUnion (Area.color area)) state
+                return True
         off_unionCheck state p
         return $ b || bool
 
@@ -51,7 +52,7 @@ erase_puyo gs state =  do
 rewriteSpase_puyo           :: V.GameState -> PlayerState -> IO ()
 rewriteSpase_puyo gs state  =  do
     MND.mapM_ f $ V.fieldArrayIndices gs
-    calculateScoreD state   -- 得点を計算して、DynamicScoreを書き換える。
+    renewScore Score.calculate state
     calculateYokoku
   where
     f :: T.AreaPosition -> IO()
@@ -61,10 +62,10 @@ rewriteSpase_puyo gs state  =  do
                  $ renew_fieldArea state p standard
     -- 予告ぷよを算出する。
     calculateYokoku =  do
-        T.Score ss ds <- get_score state
-        let (n, m)  = ds `quotRem` V.get V.OjamaRate gs
+        score <- get_score state
+        let (n, newScore)  = Score.calculateYokoku score (V.get V.OjamaRate gs)
         renewYokoku id id (n +) trt state
-        renewScore ((ds - m) +) (const m) state
+        renewScore (const newScore) state
       where
         trt = Identity.against . Identity.territory $ get_playerIdentity state
 
@@ -94,7 +95,6 @@ erase_unionPuyo state p = do
         -- おじゃまぷよを消滅させる。（消滅フラグを立てる。）
         eraseOjamaPuyo      :: PlayerState -> T.AreaPosition -> IO()
         eraseOjamaPuyo s p  =  renew_fieldArea s p $ Area.eracingPuyo Nothing
-
 
 -- エリア対象の結合チェック。このエリアがチェック対象かどうかは事前に調べてある。
 check_union :: PlayerState -> T.AreaPosition -> IO T.NumOfUnion

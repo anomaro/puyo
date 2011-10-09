@@ -16,10 +16,8 @@ module State.Player.Overwriting
     remove_playerPuyo,
     
     -- 得点更新
-    renewScoreCalculation,
     renewScore,
-    calculateScoreD,
-    
+
     -- 予告ぷよ更新
     renewYokoku,
     toSupplyYokoku,
@@ -47,8 +45,8 @@ import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
 import Common.Time  (Time)
+import qualified Common.Score           as Score
 
---------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --  状態書き換え
 --------------------------------------------------------------------------------
@@ -110,63 +108,10 @@ toAdvanceYokoku m trt state =  do
 --------------------------------------------------------------------------------
 --  得点更新
 --------------------------------------------------------------------------------
--- 得点のScoreCalculationを書き換える。
-renewScoreCalculation :: (T.NumOfChain -> T.NumOfChain) 
-                      -> ([T.NumOfUnion] -> [T.NumOfUnion]) 
-                      -> ([T.Color] -> [T.Color]) 
-                      -> PlayerState -> IO()
-renewScoreCalculation f f' f'' state =  do
-    (score, (chain, ns, cs) ) <- IORF.readIORef $ takeout_scoreState state
-    IORF.writeIORef (takeout_scoreState state)
-                    ( score, (f chain, f' ns, f'' cs) )
-
 -- 得点を書き換える。
-renewScore  :: (T.StaticScore -> T.StaticScore)
-            -> (T.DynamicScore -> T.DynamicScore)
-            -> PlayerState -> IO()
-renewScore f f' state   =  do
-    (T.Score ss sd, sc )    <- IORF.readIORef $ takeout_scoreState state
-    IORF.writeIORef (takeout_scoreState state) ( T.Score (f ss) (f' sd), sc )
-
--- 得点のScoreCalculationを計算して、DynamicScoreを書き換える。
-calculateScoreD :: PlayerState -> IO()
-calculateScoreD state   =  do
-    (score, (chain, ns, cs) ) <- IORF.readIORef $ takeout_scoreState state
-    let basicbounus = calculateBasicBounus  
-                        $ calculateBounusChain chain
-                        + (calculateBounusColor $ length $ nub $ cs)
-                        + (sum $ map calculateBounusLink ns)
-        newScore    = score .+ 10 * basicbounus * sum ns
-    IORF.writeIORef (takeout_scoreState state)
-                    (newScore, (chain, [], []))
-
--- 基本ボーナス値を算出する。
-calculateBasicBounus                :: Int -> Int
-calculateBasicBounus n  | n <= 0    =  1
-                        | n >  1000 =  999
-                        | otherwise =  n
--- 連鎖ボーナスを算出する。
-calculateBounusChain                :: Int -> Int
-calculateBounusChain n  | n < 4     =  8 * truncate ((^^) 2 $ n - 2)
-                        | otherwise =  (n - 3) * 32
-                        
--- 連結ボーナスを算出する。
-calculateBounusLink                 :: Int -> Int
-calculateBounusLink n   | n <= 4    =  0
-                        | n >= 11   =  10
-                        | otherwise =  n - 3
--- 複色ボーナスを算出する。
-calculateBounusColor                :: Int -> Int
-calculateBounusColor                =  (*) 3 . truncate . (^^) 2 .(+) (-2)
-
--- おじゃまぷよに換算されていないスコアに足す。
-(.+) :: T.Score -> T.ScoreBaseType -> T.Score
-(T.Score ss sd) .+ n    = T.Score ss $ sd + n
-infixl 5 .+
-
---  1 	2 	3 	4 	5 	6 	7 	8 	9 	10 	11 	12 	13 	14 	15 	16 	17 	18 	19
---  0 	8 	16 	32 	64 	128 256 512 999 999 999 999 999 999 999 999 999 999 999
---  0 	8 	16 	32 	64 	96 	128 160 192 224 256 288 320 352 384 416 448 480 512
+renewScore  :: (Score.Score -> Score.Score) -> PlayerState -> IO()
+renewScore f state  =
+    IORF.writeIORef (takeout_scoreState state) . f =<< get_score state
 
 --------------------------------------------------------------------------------
 --  フィールド状態更新

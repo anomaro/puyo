@@ -54,7 +54,7 @@ data GamePhase  = BuildPhase    -- ぷよ生成
 --------------------------------------------------------------------------------
 --  スコア
 --------------------------------------------------------------------------------
-data Score  = Score StaticScore DynamicScore
-type StaticScore    = ScoreBaseType     -- おじゃまぷよに換算されたスコア
-type DynamicScore   = ScoreBaseType     -- おじゃまぷよに換算されていないスコア
-type ScoreBaseType  = Int           -- スコアの数値の型。 ※2147483647
+--data Score  = Score StaticScore DynamicScore
+--type StaticScore    = ScoreBaseType     -- おじゃまぷよに換算されたスコア
+--type DynamicScore   = ScoreBaseType     -- おじゃまぷよに換算されていないスコア
+--type ScoreBaseType  = Int           -- スコアの数値の型。 ※2147483647

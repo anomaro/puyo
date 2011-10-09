@@ -41,7 +41,6 @@ module State.Player.Query
     )
     where
 
-
 import qualified State.Player.Substance as P'
 
 import Control.Monad
@@ -57,7 +56,9 @@ import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
 import Common.Time  (Time)
+import qualified Common.Score           as Score
 
+--------------------------------------------------------------------------------
 (<$<) :: Functor f => (a -> b) -> (c -> f a) -> (c -> f b)
 f <$< g =  fmap f . g
 infixr 1 <$<
@@ -65,7 +66,6 @@ infixr 1 <$<
 readField   :: (AIO.MArray a e m, AIO.Ix i) => i -> a i e -> m e
 readField   =  flip AIO.readArray 
 
---------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --  プレイヤー状態の内容を外部モジュールに伝える。
 --------------------------------------------------------------------------------
@@ -117,10 +117,8 @@ get_yokoku trt state =  do
 --  得点
 --------------------------------------------------------------------------------
 -- 得点を伝える。
-get_score       :: P'.PlayerState -> IO T.Score
-get_score state =  do
-    scores   <- IORF.readIORef $ P'.takeout_scoreState state
-    return $ fst scores
+get_score       :: P'.PlayerState -> IO Score.Score
+get_score       =  IORF.readIORef . P'.takeout_scoreState
 
 --------------------------------------------------------------------------------
 --  フィールドの状態取得
@@ -192,8 +190,7 @@ create_playerstate pI gs stateN stateY stateL   =  do
     return $ P'.PlayerState pI stateG stateF stateP stateN stateS stateY stateL
   where
     -- 得点の初期状態
-    create_scorestate   =  IORF.newIORef initalScore
-    initalScore = ( (T.Score 0 0), P'.defaultScoreCalculation )
+    create_scorestate   =  IORF.newIORef Score.initial
     -- ゲーム状態を初期化。
     create_gamePhaseState   :: IO P'.GamePhaseState
     create_gamePhaseState   =  IORF.newIORef T.BuildPhase 

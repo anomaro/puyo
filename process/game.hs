@@ -10,6 +10,7 @@ import Control.Monad    (when)
 import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Direction       as Direction
 import qualified Common.Time            as Time
+import qualified Common.Score           as Score
 
 import qualified Common.DataType   as T
 import qualified State.Setting   as V (GameState)
@@ -123,11 +124,12 @@ move_playerPuyo gs state buttons =
     in  matching d (Direction.compose r l)
   where
     matching Nothing  []    = return False
-    matching (Just _) []    = renewScore id (1+) state >> C.fall_puyo state gs
+    matching (Just _) []    = renewScore Score.fallBounus state
+                              >> C.fall_puyo state gs
     matching Nothing  (d:_) = C.move_puyo state d
     matching (Just _) (d:_) = C.move_puyo state d >>= \flagMove -> if flagMove
                                   then return flagMove
-                                  else renewScore id (1+) state
+                                  else renewScore Score.fallBounus state
                                        >> C.fall_puyo state gs
 
 -- ƒ{ƒ^ƒ“ó‘Ô‚ð’²‚×‚Ä‚Õ‚æ‚ð‰ñ“]‚·‚éB
@@ -169,7 +171,6 @@ erase_fieldPuyo gs state    =  do
                     $ T.AnimationPhase Time.animeErase T.ErasePhase'
       else shift_gamePhase state T.FallPhase
 
-
 erase_fieldPuyo'            :: V.GameState -> PlayerState -> IO()
 erase_fieldPuyo' gs state   =  E.rewriteSpase_puyo gs state
                                >> shift_gamePhase state T.DropPhase
@@ -187,7 +188,6 @@ fall_ojamaPuyo gs state =  do
   where
     trt = Identity.territory $ get_playerIdentity state
     
-
 fall_ojamaPuyo' :: V.GameState -> PlayerState -> IO()
 fall_ojamaPuyo' gs state =  do
     flagOjama   <- F.putOjamaPuyo gs state

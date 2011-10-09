@@ -1,10 +1,8 @@
 -- buildPhase.hs
 module Process.Phase.Build
-    (
-    build_playerPuyo,
-    checkLose,
-    )
-    where
+( build_playerPuyo
+, checkLose
+) where
 
 import Control.Monad
 
@@ -18,7 +16,7 @@ import State.Player.Query   (
 import State.Player.Overwriting (
     eat_nextPuyo,
     renew_playerPuyo',
-    renewScoreCalculation,
+    renewScore,
     toSupplyYokoku,
     toAdvanceYokoku,
     renewLoseFlag,
@@ -29,15 +27,16 @@ import qualified Common.Function   as U
 import qualified State.Setting  as V 
 
 import qualified Common.PlayerIdentity  as Identity
-import qualified Common.Area            as Area     (isPuyo)
+import qualified Common.Area            as Area  (isPuyo)
 import qualified Common.Direction       as Direction
+import qualified Common.Score           as Score (refresh)
 
 --------------------------------------------------------------------------------
 --  ‘€ì‚Õ‚æ‚ð¶¬
 --------------------------------------------------------------------------------
 build_playerPuyo        :: V.GameState -> P.PlayerState -> IO()
 build_playerPuyo gs state   =  do
-    renewScoreCalculation (0*) (const []) (const []) state
+    renewScore Score.refresh state
     color   <- pick_nextPuyoColor state
     eat_nextPuyo state 2
     renew_playerPuyo' state color

@@ -1,6 +1,6 @@
 -- file: render.hs
 module Render.Game
-( render_gameField,       -- ÉQÅ[ÉÄÇÃï`âÊ
+( render_gameField        -- ÉQÅ[ÉÄÇÃï`âÊ
 ) where
 
 import Control.Monad
@@ -33,6 +33,7 @@ import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
 import qualified Common.Time            as Time (Time, animeRotate)
+import qualified Common.Score           as Score
 
 import qualified Common.DataType   as T
 import qualified Common.Function    as U
@@ -156,7 +157,7 @@ render_score gs state   =  do
     ym  = field_pointY gs - unitAreaY gs * 2 * (fromIntegral $ V.fieldSizeY' gs)
     scale       = 0.001
     objScore    = do
-        score <- get_score state >>= \(T.Score n m ) -> return $ n + m
+        score <- get_score state >>= return . Score.display
         GLUT.renderString GLUT.Roman $ show score
     
 --------------------------------------------------------------------------------
@@ -246,7 +247,6 @@ render_playerPuyo gs state  =  do
                             sc sc 0 $ objPuyo cm
         render_gameobject' (GLUT.Vector3 posX (posY - gy) 0) 
                             sc sc 0 $ objPuyo cb
-
 
 -- âÒì]ÇÃï`âÊÇÃÇ∏ÇÍÇÃêîílÅB
 rotateGap :: V.GameState -> Direction.Area -> Time.Time -> (Double, Double)

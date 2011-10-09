@@ -14,7 +14,7 @@ import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
 import Common.Time  (Time)
-
+import Common.Score (Score)
 --------------------------------------------------------------------------------
 --  プレイヤー状態
 --------------------------------------------------------------------------------
@@ -44,12 +44,7 @@ data PlayerPuyo
         
 type NextPuyoState   = IORF.IORef [T.Color]   
           
-type ScoreState      = IORF.IORef (T.Score, ScoreCalculation)    
-type ScoreCalculation   = ( T.NumOfChain,   -- 連鎖数
-                            [T.NumOfUnion], -- 連結数
-                            [T.Color]       -- 消したぷよの色
-                            )
-defaultScoreCalculation = (0, [], [])   :: ScoreCalculation
+type ScoreState      = IORF.IORef Score 
 
 type YokokuState    = IORF.IORef YokokuField
 type YokokuField    = (Yokoku, Yokoku)
