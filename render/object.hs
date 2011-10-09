@@ -28,6 +28,7 @@ import qualified Graphics.UI.GLUT   as GLUT
 
 import qualified Common.DataType   as T
 import qualified Common.Name      as W (window_sizeY, window_sizeX)
+import qualified Common.Direction       as Direction
 
 --------------------------------------------------------------------------------
 --  型
@@ -94,7 +95,7 @@ objPuyo color       =  do
             $ shape_circle (unitAreaX' * 0.93) (unitAreaY' * 0.93) 0 0 0 12
 
 -- ぷよ（フィールド上）
-objPuyo'            :: T.Color -> [T.Direction] -> GameObject
+objPuyo'            :: T.Color -> [Direction.Area] -> GameObject
 objPuyo' color ds   =  do
     GLUT.color $ to_glutColor3 color        -- 色を変える。
     GLUT.renderPrimitive GLUT.Polygon
@@ -103,26 +104,26 @@ objPuyo' color ds   =  do
     mapM_ linkPuyo ds
   where
     -- ぷよの繋がり
-    linkPuyo    :: T.Direction -> GameObject
-    linkPuyo T.DUp      =
+    linkPuyo    :: Direction.Area -> GameObject
+    linkPuyo Direction.Up      =
         GLUT.renderPrimitive GLUT.Quads $ do 
             myVertex $ GLUT.Vertex3 (unitAreaX'  / sqrt 2 * 0.9) unitAreaY' 0
             myVertex $ GLUT.Vertex3 (-unitAreaX' / sqrt 2 * 0.9) unitAreaY' 0
             myVertex $ GLUT.Vertex3 (-unitAreaX' / sqrt 2) 0 0
             myVertex $ GLUT.Vertex3 (unitAreaX'  / sqrt 2) 0 0
-    linkPuyo T.DDown    =
+    linkPuyo Direction.Down    =
         GLUT.renderPrimitive GLUT.Quads $ do 
             myVertex $ GLUT.Vertex3 (unitAreaX'  / sqrt 2 * 0.9) (-unitAreaY') 0
             myVertex $ GLUT.Vertex3 (-unitAreaX' / sqrt 2 * 0.9) (-unitAreaY') 0
             myVertex $ GLUT.Vertex3 (-unitAreaX' / sqrt 2) 0 0
             myVertex $ GLUT.Vertex3 (unitAreaX'  / sqrt 2) 0 0
-    linkPuyo T.DLeft    =
+    linkPuyo Direction.Left    =
         GLUT.renderPrimitive GLUT.Quads $ do 
             myVertex $ GLUT.Vertex3 (-unitAreaX') (unitAreaY'  / sqrt 2 * 0.9) 0
             myVertex $ GLUT.Vertex3 (-unitAreaX') (-unitAreaY' / sqrt 2 * 0.9) 0
             myVertex $ GLUT.Vertex3 0 (-unitAreaY' / sqrt 2) 0
             myVertex $ GLUT.Vertex3 0 (unitAreaY'  / sqrt 2) 0
-    linkPuyo T.DRight   =
+    linkPuyo Direction.Right   =
         GLUT.renderPrimitive GLUT.Quads $ do 
             myVertex $ GLUT.Vertex3 unitAreaX' (unitAreaY'  / sqrt 2 * 0.9) 0
             myVertex $ GLUT.Vertex3 unitAreaX' (-unitAreaY' / sqrt 2 * 0.9) 0

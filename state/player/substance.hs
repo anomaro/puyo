@@ -12,6 +12,8 @@ import qualified Common.Function    as U
 
 import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area
+import qualified Common.Direction       as Direction
+import Common.Time  (Time)
 
 --------------------------------------------------------------------------------
 --  プレイヤー状態
@@ -34,9 +36,9 @@ data PlayerPuyo
     = NonExistent
     | PlayerPuyoInfo    (T.Color,T.Color)   -- （基点ぷよの色、動点ぷよの色）
                         T.AreaPosition      -- 基点ぷよのフィールド座標
-                        T.Direction         -- 動点ぷよの方向
-                        T.Time              -- 自然落下用のカウンタ
-                        T.Time              -- 回転用のカウンタ
+                        Direction.Area      -- 動点ぷよの方向
+                        Time                -- 自然落下用のカウンタ
+                        Time                -- 回転用のカウンタ
                         Bool                -- クイックターンフラグ
         deriving (Show, Eq)
         

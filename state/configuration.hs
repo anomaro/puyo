@@ -4,10 +4,9 @@ module State.Configuration
 
 import Data.Maybe (isJust, fromJust)
 
-import qualified Common.DataType   as T
-import qualified State.Setting   as V
-import qualified Common.Name      as W
-    
+import qualified State.Setting      as V
+import qualified Common.Time        as Time (Time, inputConfig)
+
 --------------------------------------------------------------------------------
 --  型
 --------------------------------------------------------------------------------
@@ -24,9 +23,9 @@ data Entry  = FallTime      -- 落下時間
         deriving (Eq, Enum, Bounded)
 
 data ConfiguPhase   = SelectPhase
-                    | AnimationPhase T.Time
+                    | AnimationPhase Time.Time
 
-defaultConfigAnimePhase = AnimationPhase W.inputTimeConfig
+defaultConfigAnimePhase = AnimationPhase Time.inputConfig
 
 --------------------------------------------------------------------------------
 --  設定データ参照

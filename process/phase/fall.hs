@@ -10,6 +10,7 @@ import Control.Monad
 
 import qualified Common.PlayerIdentity  as Identity (against, territory)
 import qualified Common.Area            as Area
+import qualified Common.Direction       as Direction
 
 import qualified Common.DataType  as T
 import qualified Common.Function    as U
@@ -20,7 +21,7 @@ import State.Player.DataType    as P
 import State.Player.Query (
     get_playerIdentity,
     get_fallOjamaPuyo,
-    is_neighborSpace,
+    get_fieldStateArea,
     )
 import State.Player.Overwriting (
     renew_fieldArea,
@@ -66,8 +67,8 @@ putOjamaPuyo gs state =  do
     targetAreaPosition ns = [(V.hidingFieldRank, x)| x <- ns]
     -- おじゃまぷよのセッティング
     put p   = do
-        isSpace <- is_neighborSpace p T.DPoint state
-        if isSpace
+        area <- get_fieldStateArea p state
+        if Area.isSpace area
           then renew_fieldArea state p Area.defaultOjamaPuyo
           else when W.flag_oturi $ renewYokoku id (+1) id trt state
             

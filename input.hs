@@ -27,8 +27,7 @@ import qualified Data.IORef         as IORF
 import qualified Graphics.UI.GLUT   as GLUT
 import Data.List (nub, (\\))
 
-import qualified Common.DataType  as T (Time)
-import qualified Common.Name     as W (inputTime_moveX)
+import qualified Common.Time        as Time (Time, inputMoveX, count)
 
 --------------------------------------------------------------------------------
 --  ボタンの状態
@@ -39,7 +38,7 @@ data ButtonState
 
 -- 押しっぱなし入力を防ぐ。入力を受け付ける状態と、拒否する状態、入力を受け付け続ける状態。
 type ModeState      = IORF.IORef ButtonMode
-data ButtonMode     = Acceptance | Refusal T.Time | Lifting
+data ButtonMode     = Acceptance | Refusal Time.Time | Lifting
         deriving (Show, Eq)
 
 -- 入力されたボタンの種類を格納して置く。
@@ -104,11 +103,11 @@ renew_buttonState ( ButtonState listIB listLB listAB (modeL, modeR) )   = do
           else MND.when (elem_Button list_limitButton listLB') $
                  case mode'
                    of Acceptance
-                        -> IORF.writeIORef mode (Refusal W.inputTime_moveX)
+                        -> IORF.writeIORef mode (Refusal Time.inputMoveX)
                       (Refusal 0) 
                         -> IORF.writeIORef mode Lifting
                       (Refusal n)
-                        -> do IORF.writeIORef mode (Refusal $ n - 1)
+                        -> do IORF.writeIORef mode (Refusal $ Time.count n)
                               IORF.modifyIORef listAB (\\ [button])
                       _ -> return ()
                       

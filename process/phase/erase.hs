@@ -10,6 +10,7 @@ import qualified Control.Monad      as MND
 
 import qualified Common.PlayerIdentity  as Identity (against, territory)
 import qualified Common.Area            as Area
+import qualified Common.Direction       as Direction
 
 import qualified Common.DataType   as T
 import qualified Common.Function    as U
@@ -80,9 +81,9 @@ erase_unionPuyo :: PlayerState -> T.AreaPosition -> IO()
 erase_unionPuyo state p = do
     area <- get_fieldStateArea p state
     renew_fieldArea state p $ Area.eracingPuyo (Just $ Area.color area)
-    mapM_ (fff $ Area.color area) listDirection
+    mapM_ (fff $ Area.color area) Direction.areas
   where
-    fff :: T.Color -> T.Direction -> IO()
+    fff :: T.Color -> Direction.Area -> IO()
     fff color d = do
         area    <- get_fieldStateArea p' state
         MND.when (Area.isEraseOjamaPuyo area)   $ eraseOjamaPuyo  state p
@@ -100,9 +101,9 @@ check_union :: PlayerState -> T.AreaPosition -> IO T.NumOfUnion
 check_union state p    = do
     area <- get_fieldStateArea p state
     renew_fieldArea state p $ Area.unionCheckCompletion area
-    MND.foldM (fff $ Area.color area) 1 listDirection
+    MND.foldM (fff $ Area.color area) 1 Direction.areas
   where
-    fff :: T.Color -> T.NumOfUnion -> T.Direction -> IO T.NumOfUnion
+    fff :: T.Color -> T.NumOfUnion -> Direction.Area -> IO T.NumOfUnion
     fff color n d = do
         area    <- get_fieldStateArea p' state
         if Area.isUnionCheck (Just color) area p'
@@ -110,6 +111,3 @@ check_union state p    = do
           else return n
       where
         p'  = U.neighbor_area d p
-
--- •ûŒü‚ÌƒŠƒXƒg
-listDirection   = [T.DUp, T.DRight, T.DDown, T.DLeft]

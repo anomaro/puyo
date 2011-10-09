@@ -55,6 +55,8 @@ import qualified State.Setting  as V
 
 import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area
+import qualified Common.Direction       as Direction
+import Common.Time  (Time)
 
 (<$<) :: Functor f => (a -> b) -> (c -> f a) -> (c -> f b)
 f <$< g =  fmap f . g
@@ -128,7 +130,7 @@ get_fieldStateArea      :: T.AreaPosition -> P'.PlayerState -> IO Area.Area
 get_fieldStateArea p    =  readField p <=< P'.takeout_fieldstate
                              
 -- 指定した方向に隣接するエリアのオブジェクトが、空白かどうか判定。
-is_neighborSpace :: T.AreaPosition -> T.Direction -> P'.PlayerState -> IO Bool
+is_neighborSpace :: T.AreaPosition -> Direction.Area -> P'.PlayerState -> IO Bool
 is_neighborSpace p d =
     Area.isSpace <$< readField (U.neighbor_area d p) <=< P'.takeout_fieldstate
 
@@ -148,15 +150,15 @@ get_PlayerPuyoPosition      :: P'.PlayerState -> IO T.AreaPosition
 get_PlayerPuyoPosition      =  getPPPosition        <$< readTakePP
 
 -- 操作ぷよの動点ぷよの方向を伝える。
-get_PlayerPuyoDirection     :: P'.PlayerState -> IO T.Direction
+get_PlayerPuyoDirection     :: P'.PlayerState -> IO Direction.Area
 get_PlayerPuyoDirection     =  getPPDirection       <$< readTakePP
 
 -- 操作ぷよの自然落下用のカウンタを伝える。
-get_PlayerPuyoFallTime      :: P'.PlayerState -> IO T.Time
+get_PlayerPuyoFallTime      :: P'.PlayerState -> IO Time
 get_PlayerPuyoFallTime      =  getPPFallTime        <$< readTakePP
 
 -- 操作ぷよの回転用のカウンタを伝える。
-get_PlayerPuyoRotateTime    :: P'.PlayerState -> IO T.Time
+get_PlayerPuyoRotateTime    :: P'.PlayerState -> IO Time
 get_PlayerPuyoRotateTime    =  getPPRotateTime      <$< readTakePP
 
 -- 操作ぷよのクイックターンの可否を伝える。
@@ -169,9 +171,9 @@ readTakePP =  IORF.readIORef <=< P'.takeout_ppuyostate
 
 getPPColor          (P'.PlayerPuyoInfo c _ _ _ _ _)    = c :: (T.Color,T.Color)
 getPPPosition       (P'.PlayerPuyoInfo _ p _ _ _ _)    = p :: T.AreaPosition
-getPPDirection      (P'.PlayerPuyoInfo _ _ d _ _ _)    = d :: T.Direction
-getPPFallTime       (P'.PlayerPuyoInfo _ _ _ f _ _)    = f :: T.Time
-getPPRotateTime     (P'.PlayerPuyoInfo _ _ _ _ r _)    = r :: T.Time
+getPPDirection      (P'.PlayerPuyoInfo _ _ d _ _ _)    = d :: Direction.Area
+getPPFallTime       (P'.PlayerPuyoInfo _ _ _ f _ _)    = f :: Time
+getPPRotateTime     (P'.PlayerPuyoInfo _ _ _ _ r _)    = r :: Time
 getPPFlagQuickTurn  (P'.PlayerPuyoInfo _ _ _ _ _ q)    = q :: Bool
 
 

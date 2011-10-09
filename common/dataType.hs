@@ -2,6 +2,7 @@
 module Common.DataType
      where
 
+import Common.Time  (Time)
 
 --------------------------------------------------------------------------------
 --  場面遷移
@@ -13,22 +14,12 @@ data GameName   = PuyoPuyo  -- 通常のぷよぷよ
 
 --------------------------------------------------------------------------------
 --  ゲーム
---------------------------------------------------------------------------------
--- 時間
-type Time   = Int
-    
+-------------------------------------------------------------------------------- 
 -- フィールド座標。( Ｙ座標, Ｘ座標 )
 type AreaPosition   = (PositionY, PositionX)
 type PositionY  = Int
 type PositionX  = Int 
 
--- 方向
-data Direction  = DUp | DRight | DDown | DLeft | DPoint
-        deriving (Show, Eq)
--- 回転方向
-data RotationDirection  = RRight | RLeft | RPoint
-        deriving (Show, Eq)
-        
 -- 色
 data Color  = Red 
             | Green

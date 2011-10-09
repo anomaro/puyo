@@ -31,6 +31,7 @@ import State.Player.Overwriting (
     )  
 
 import qualified Common.Area            as Area
+import qualified Common.Direction       as Direction
 
 --------------------------------------------------------------------------------
 -- 操作ぷよの着地
@@ -47,19 +48,19 @@ land_puyo state =  do
         pos@(y,_)   <- get_PlayerPuyoPosition   state
         d           <- get_PlayerPuyoDirection  state
         let pos'@(y',_) = U.neighbor_area d pos
-        boolb   <- is_neighborSpace pos  T.DDown state
-        boolm   <- is_neighborSpace pos' T.DDown state
+        boolb   <- is_neighborSpace pos  Direction.Down state
+        boolm   <- is_neighborSpace pos' Direction.Down state
         let (areaB, powerB) = Area.landPuyo cb pos d boolb
-            (areaM, powerM) = Area.landPuyo cm pos' (U.negaDirection d) boolm
+            (areaM, powerM) = Area.landPuyo cm pos' (Direction.inversion d) boolm
 
         MND.when (y  >= V.hidingFieldRank) $ renew_fieldArea state pos  areaB
         MND.when (y' >= V.hidingFieldRank) $ renew_fieldArea state pos' areaM
         
-        areaB'  <- get_fieldStateArea (U.neighbor_area T.DDown pos ) state
-        areaM'  <- get_fieldStateArea (U.neighbor_area T.DDown pos') state
+        areaB'  <- get_fieldStateArea (U.neighbor_area Direction.Down pos ) state
+        areaM'  <- get_fieldStateArea (U.neighbor_area Direction.Down pos') state
         
-        transmitAnimeLanding powerB areaB' (U.neighbor_area T.DDown pos ) state
-        transmitAnimeLanding powerM areaM' (U.neighbor_area T.DDown pos') state
+        transmitAnimeLanding powerB areaB' (U.neighbor_area Direction.Down pos ) state
+        transmitAnimeLanding powerM areaM' (U.neighbor_area Direction.Down pos') state
 
 --------------------------------------------------------------------------------
 -- ちぎり落下
@@ -82,13 +83,13 @@ drop_puyo gs state  =
         drop_areaPuyo   :: T.AreaPosition -> IO Bool
         drop_areaPuyo p =  do
             areaObj    <- get_fieldStateArea p state 
-            flagSpace  <- is_neighborSpace p T.DDown state
+            flagSpace  <- is_neighborSpace p Direction.Down state
             
             if flagSpace && Area.isPuyo areaObj 
               then do 
                 renew_fieldArea state p' areaObj
                 renew_fieldArea state p  standard
-                flagSpace'  <- is_neighborSpace p' T.DDown state
+                flagSpace'  <- is_neighborSpace p' Direction.Down state
                 areaObj''   <- get_fieldStateArea p'' state
                 if flagSpace' || Area.isDroppingAnime areaObj''
                   then do
@@ -100,8 +101,8 @@ drop_puyo gs state  =
               else do
                 return False
           where
-            p'@(y', _)  = U.neighbor_area T.DDown p
-            p'' = U.neighbor_area T.DDown p'
+            p'@(y', _)  = U.neighbor_area Direction.Down p
+            p'' = U.neighbor_area Direction.Down p'
 
 --------------------------------------------------------------------------------
 -- アニメーションタイプ
@@ -126,6 +127,6 @@ transmitAnimeLanding a area p state = MND.when (Area.isNoAnime area)
         area'   <- get_fieldStateArea p' state
         transmitAnimeLanding (a - 1) area' p' state
       where
-        p' = U.neighbor_area T.DDown p
+        p' = U.neighbor_area Direction.Down p
 
 defaultLanding  = Area.animeStartLanding Area.defauletPower

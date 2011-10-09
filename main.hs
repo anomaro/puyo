@@ -26,7 +26,7 @@ import qualified State.Result   as D
 import qualified State.Player.DataType  as P
 import qualified State.Player.Query     as Q
 import qualified Process.Configuration  as C
-
+import qualified Common.Time            as Time (frameRate)
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 main :: IO ()
@@ -77,7 +77,7 @@ timer_callback f bs stage =  do
     newstage <- f bs stage
     GLUT.addTimerCallback timerInterval $ timer_callback f bs newstage
 
-timerInterval   =  1000 `quot` W.frame_rate   :: GLUT.Timeout
+timerInterval   =  1000 `quot` Time.frameRate   :: GLUT.Timeout
 
 --------------------------------------------------------------------------------
 --  ƒQ[ƒ€‚ÌXV 

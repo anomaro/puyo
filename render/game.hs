@@ -31,14 +31,13 @@ import State.Player.Overwriting (
 
 import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area
+import qualified Common.Direction       as Direction
+import qualified Common.Time            as Time (Time, animeRotate)
 
 import qualified Common.DataType   as T
 import qualified Common.Function    as U
 import qualified State.Setting  as V
 import qualified Common.Name      as W (
-    animeTime_rotate,
-    amimeTime_drop,
-    amimeTime_land,
     sizeYyokokuLv3,
     )
 import Render.Object
@@ -170,15 +169,15 @@ render_fallPoint gs state   =  do
     d           <- get_PlayerPuyoDirection  state
     
     bottomPosB  <- bottomArea pos
-    bottomPosM  <- if d == T.DUp || d == T.DDown
+    bottomPosM  <- if d == Direction.Up || d == Direction.Down
                     then return bottomPosB
                     else bottomArea $ U.neighbor_area d pos
-    render_fieldObject gs trt (if d == T.DDown 
-                                then U.neighbor_area T.DUp bottomPosB
+    render_fieldObject gs trt (if d == Direction.Down 
+                                then U.neighbor_area Direction.Up bottomPosB
                                 else bottomPosB         
                                ) $ objFallPoint cb
-    render_fieldObject gs trt (if d == T.DUp
-                                then U.neighbor_area T.DUp bottomPosM
+    render_fieldObject gs trt (if d == Direction.Up
+                                then U.neighbor_area Direction.Up bottomPosM
                                 else bottomPosM         
                                ) $ objFallPoint cm
     return ()
@@ -186,8 +185,8 @@ render_fallPoint gs state   =  do
     -- その列の接地エリア
     bottomArea :: T.AreaPosition -> IO T.AreaPosition
     bottomArea pos    = do
-        b   <- is_neighborSpace pos T.DDown state
-        if b    then bottomArea $ U.neighbor_area T.DDown pos
+        b   <- is_neighborSpace pos Direction.Down state
+        if b    then bottomArea $ U.neighbor_area Direction.Down pos
                 else return pos
     trt = Identity.territory $ get_playerIdentity state
 
@@ -228,8 +227,8 @@ render_playerPuyo gs state  =  do
     
     render_fieldObject' (y, x) fallTime d rotateTime color
   where
-    render_fieldObject' :: T.AreaPosition -> T.Time
-                           -> T.Direction -> T.Time -> (T.Color, T.Color)
+    render_fieldObject' :: T.AreaPosition -> Time.Time
+                           -> Direction.Area -> Time.Time -> (T.Color, T.Color)
                            -> IO()
     render_fieldObject' (y, x) fallTime d rotateTime (cb, cm) = do  
         let fallTime'   = V.get V.FallTime gs
@@ -250,19 +249,18 @@ render_playerPuyo gs state  =  do
 
 
 -- 回転の描画のずれの数値。
-rotateGap :: V.GameState -> T.Direction -> T.Time -> (Double, Double)
+rotateGap :: V.GameState -> Direction.Area -> Time.Time -> (Double, Double)
 rotateGap gs direction rotateTime  = 
-    let r = pi * fromIntegral rotateTime / (2 * fromIntegral W.animeTime_rotate)
+    let r = pi * fromIntegral rotateTime / (2 * fromIntegral Time.animeRotate)
     in
     (\(fy, fx) -> (2 * unitAreaY gs * fy r, 2 * unitAreaX gs * fx r) ) 
         (directionalFunctions direction)
       where
-        directionalFunctions :: Floating a => T.Direction -> ((a->a), (a->a))
-        directionalFunctions T.DUp      = (cos, negate.sin)
-        directionalFunctions T.DRight   = (sin, cos)
-        directionalFunctions T.DDown    = (negate.cos, sin)
-        directionalFunctions T.DLeft    = (negate.sin, negate.cos)
-        directionalFunctions _          = (id, id)
+        directionalFunctions :: Floating a => Direction.Area -> ((a->a), (a->a))
+        directionalFunctions Direction.Up      = (cos, negate.sin)
+        directionalFunctions Direction.Right   = (sin, cos)
+        directionalFunctions Direction.Down    = (negate.cos, sin)
+        directionalFunctions Direction.Left    = (negate.sin, negate.cos)
 
 --------------------------------------------------------------------------------
 --  フィールド背景描画
@@ -294,13 +292,12 @@ render_field gs state   =  MND.mapM_ f $ V.fieldArrayIndices gs
 
 -- 隣接したエリアを調べて、同じ色のぷよがあった方向のリストを得る。
 neighborSameColorPuyo           :: Area.Area -> T.AreaPosition -> PlayerState 
-                                -> IO[T.Direction]
+                                -> IO[Direction.Area]
 neighborSameColorPuyo area p state
   | not (Area.isLink area) = return []
-  | otherwise              = MND.foldM ffff [] directions
+  | otherwise              = MND.foldM ffff [] Direction.areas
   where
-    directions = [T.DRight, T.DDown, T.DLeft, T.DUp]
-    ffff    :: [T.Direction] -> T.Direction -> IO[T.Direction]
+    ffff    :: [Direction.Area] -> Direction.Area -> IO[Direction.Area]
     ffff acc d  =  do
         area' <- get_fieldStateArea (U.neighbor_area d p) state
         if (Area.isLink area' && Area.color area == Area.color area')

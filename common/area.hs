@@ -45,10 +45,12 @@ import Data.Maybe (fromJust)
 
 import Standardizable
 import Common.DataType
-import Common.Name
+--import Common.Name
 import qualified State.Setting  as V
 
-import qualified Common.Name      as W
+--import qualified Common.Name      as W
+import qualified Common.Direction   as Direction
+import qualified Common.Time        as Time
 
 --------------------------------------------------------------------------------
 --  型
@@ -72,11 +74,10 @@ instance Standardizable UnionCheck where
     standard        = NotYet
 
 -- フィールドぷよのアニメーションの状態を表すデータ。
-data AnimationType  = Normal                -- アニメーション無し
-                    | Dropping   Time       -- 落下時
-                    | Landing    Time Power -- 着地時
-                    | Erasing    Time       -- 消滅時
---                    | Projecting Time       -- 消滅予測時
+data AnimationType  = Normal                    -- アニメーション無し
+                    | Dropping Time.Time        -- 落下時
+                    | Landing  Time.Time Power  -- 着地時
+                    | Erasing  Time.Time        -- 消滅時
         deriving (Show, Eq)
 instance Standardizable AnimationType where
     standard        = Normal
@@ -91,11 +92,11 @@ initialSnd  = Space :: Area
 
 defaultOjamaPuyo    =  defaultState Ojama   :: Area
 
-animeStartDropping  =  Dropping amimeTime_drop    :: AnimationType
-animeStartErasing   =  Erasing  amimeTime_erase   :: AnimationType
+animeStartDropping  =  Dropping Time.animeDrop    :: AnimationType
+animeStartErasing   =  Erasing  Time.animeErase   :: AnimationType
 
 animeStartLanding   :: Power  -> AnimationType
-animeStartLanding p =  Landing amimeTime_land p
+animeStartLanding p =  Landing Time.animeLand p
 
 defauletPower   = 3 :: Power
 
@@ -136,9 +137,9 @@ countAT :: Area -> Area
 countAT = modifyAnime count
 
 count                           :: AnimationType -> AnimationType
-count ( Dropping n   )  | n > 0 =  Dropping $ n - 1
-count ( Landing  n p )  | n > 0 =  Landing  ( n - 1 ) p
-count ( Erasing  n   )  | n > 0 =  Erasing  $ n - 1
+count ( Dropping n   )  | n > 0 =  Dropping $ Time.count n
+count ( Landing  n p )  | n > 0 =  Landing  ( Time.count n ) p
+count ( Erasing  n   )  | n > 0 =  Erasing  $ Time.count n
 count _                         =  Normal
 
 -- デフォルト適用
@@ -212,21 +213,22 @@ morph (Landing t pow) height
             power           = 1.1 + 0.1 * (pow' - 1)
             timeCoefficient = ((halfTime - remTime) / halfTime) ^ 2 -- 時間係数
               where 
-                halfTime    = fromIntegral W.amimeTime_land / 2 + 1
+                halfTime    = fromIntegral Time.animeLand / 2 + 1
                 remTime     = abs $ halfTime - fromIntegral t   -- 残り時間
         pow'    | height == 0 && pow >= defauletPower   = pow - 1
                 | otherwise                             = pow
 morph (Erasing t)     _
     | t `rem` 8 >= 4            = Nothing
 morph (Dropping t)    _         = Just (($ 0) . ($ 1) . ($ 1) . ($ mY) . ($ 0))
-    where mY = fromIntegral W.amimeTime_drop * 1 / fromIntegral W.amimeTime_drop
+    where mY = fromIntegral Time.animeDrop * 1 / fromIntegral Time.animeDrop
 morph _ _                       = Just (($ 0) . ($ 1) . ($ 1) . ($ 0) . ($ 0))
 
 --------------------------------------------------------------------------------
 --  drop
 --------------------------------------------------------------------------------
-landPuyo    :: Color -> AreaPosition -> Direction -> Bool -> (Area, Power)
+landPuyo    :: Color -> AreaPosition -> Direction.Area -> Bool -> (Area, Power)
 landPuyo col pos@(y, _) dir isNeighborSpace = (Puyo col NotYet anime, power)
   where
-    anime   = (animeStartLanding power) `orStandardIf` not (isNeighborSpace && dir /= DDown)
-    power   = if dir == DUp then defauletPower - 1 else defauletPower
+    anime   = (animeStartLanding power) `orStandardIf` 
+                not (isNeighborSpace && dir /= Direction.Down)
+    power   = if dir == Direction.Up then defauletPower - 1 else defauletPower

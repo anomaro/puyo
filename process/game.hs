@@ -4,15 +4,16 @@ module Process.Game
     convert_gamePhase,
     )
     where
-import Data.Maybe (isJust)
+import Data.Maybe       (isJust)
+import Control.Monad    (when)
 
 import qualified Common.PlayerIdentity  as Identity
+import qualified Common.Direction       as Direction
+import qualified Common.Time            as Time
 
 import qualified Common.DataType   as T
-import qualified Common.Function    as U ((<-+->))
 import qualified State.Setting   as V (GameState)
-import qualified Common.Name      as W (amimeTime_move, amimeTime_drop,
-                                  amimeTime_land, amimeTime_erase)
+
 import qualified Input          as I
 import qualified Process.Phase.Build    as B
 import qualified Process.Phase.Control  as C
@@ -34,6 +35,9 @@ import State.Player.Overwriting (
     renewScore,
     )
 
+
+wrapMaybe       :: Bool -> a -> Maybe a
+wrapMaybe p x   =  if p then Just x else Nothing
 --------------------------------------------------------------------------------
 --  ゲーム状態遷移
 --------------------------------------------------------------------------------
@@ -71,9 +75,10 @@ check_gameEnd state =  do
 --------------------------------------------------------------------------------
 --  AnimationPhase Time GamePhase   アニメーション硬直
 --------------------------------------------------------------------------------
-animation        :: T.Time -> T.GamePhase -> PlayerState -> IO()
+animation        :: Time.Time -> T.GamePhase -> PlayerState -> IO()
 animation time nextPhase state
- | time > 0  = shift_gamePhase state $ T.AnimationPhase (time - 1) nextPhase
+ | time > 0  = shift_gamePhase state 
+                $ T.AnimationPhase (Time.count time) nextPhase
  | otherwise = shift_gamePhase state nextPhase
 
 --------------------------------------------------------------------------------
@@ -101,42 +106,39 @@ control_playerPuyo stateB gs state = do
              Identity.Com name -> control_playerPuyo' I.testButtonList gs state
 
 control_playerPuyo' :: [I.Button] -> V.GameState -> PlayerState -> IO()
-control_playerPuyo' listB gs state = do
-    flag_playermove     <- move_playerPuyo gs state listB       -- ぷよ移動
-    flag_playerrotate   <- rotate_playerPuyo state listB        -- ぷよ回転
-    flag_fallNatural    <- C.fallNatural_playerPuyo state gs    -- 自然落下
-    if flag_playermove -- || flag_playerrotate
-     then do nextPhase <- get_gamePhase state
-             shift_gamePhase state 
-                (T.AnimationPhase W.amimeTime_move nextPhase)
-     else return ()
+control_playerPuyo' listB gs state  = do
+    C.fallNatural_playerPuyo state gs
+    flag_playerrotate   <- rotate_playerPuyo state listB
+    flag_playermove     <- move_playerPuyo gs state listB
+    when flag_playermove
+     ( get_gamePhase state >>=
+       shift_gamePhase state . T.AnimationPhase Time.animeMove )
      
 -- ボタン状態を調べてぷよを移動する。
 move_playerPuyo :: V.GameState -> PlayerState -> [I.Button] -> IO Bool
 move_playerPuyo gs state buttons =
-    let r   = if elem I.right_button buttons then T.DRight else T.DPoint
-        l   = if elem I.left_button  buttons then T.DLeft  else T.DPoint
-        d   = if elem I.down_button  buttons then T.DDown  else T.DPoint
-        coordinates  = (d ,r  U.<-+->  l)
-    in case coordinates
-       of (T.DPoint, T.DPoint)  -> return False
-          (T.DDown , T.DPoint)  -> renewScore id (1+) state >>
-                                   C.fall_puyo state gs >>= return
-          (T.DPoint, d)         -> C.move_puyo state d  >>= return  
-          (T.DDown , d)         -> do flagMove <- C.move_puyo state d
-                                      if flagMove
-                                        then return flagMove
-                                        else renewScore id (1+) state >>
-                                             C.fall_puyo state gs >>= return
+    let r   = wrapMaybe (elem I.right_button buttons) Direction.Right
+        l   = wrapMaybe (elem I.left_button  buttons) Direction.Left
+        d   = wrapMaybe (elem I.down_button  buttons) Direction.Down
+    in  matching d (Direction.compose r l)
+  where
+    matching Nothing  []    = return False
+    matching (Just _) []    = renewScore id (1+) state >> C.fall_puyo state gs
+    matching Nothing  (d:_) = C.move_puyo state d
+    matching (Just _) (d:_) = C.move_puyo state d >>= \flagMove -> if flagMove
+                                  then return flagMove
+                                  else renewScore id (1+) state
+                                       >> C.fall_puyo state gs
+
 -- ボタン状態を調べてぷよを回転する。
 rotate_playerPuyo :: PlayerState -> [I.Button] -> IO Bool
 rotate_playerPuyo state buttons =
-    let r   = if elem I.two_button buttons  then T.RRight else T.RPoint
-        l   = if elem I.one_button buttons  then T.RLeft  else T.RPoint
-        coordinates  = r  U.<-+->  l
+    let r   = wrapMaybe (elem I.two_button buttons) Direction.Clockwise
+        l   = wrapMaybe (elem I.one_button buttons) Direction.CounterClockwise
+        coordinates  = Direction.compose r l
     in case coordinates
-       of T.RPoint  -> return False
-          rd        -> C.rotate_puyo state rd >> return True
+       of []        -> return False
+          (rd:_)    -> C.rotate_puyo state rd >> return True
               
 --------------------------------------------------------------------------------
 --  DropPhase       ちぎりやぷよ消滅後に起こるぷよ落下
@@ -152,9 +154,9 @@ drop_fieldPuyo gs state =  do
         flagDrop <- D.drop_puyo gs state
         if flagDrop
           then shift_gamePhase state 
-                    (T.AnimationPhase W.amimeTime_drop T.DropPhase)
+                    (T.AnimationPhase Time.animeDrop T.DropPhase)
           else shift_gamePhase state 
-                    (T.AnimationPhase W.amimeTime_land T.ErasePhase)
+                    (T.AnimationPhase Time.animeLand T.ErasePhase)
                     
 --------------------------------------------------------------------------------
 --  ErasePhase      ぷよの消滅
@@ -164,7 +166,7 @@ erase_fieldPuyo gs state    =  do
     flagErase   <- E.erase_puyo gs state
     if flagErase
       then shift_gamePhase state 
-                    $ T.AnimationPhase W.amimeTime_erase T.ErasePhase'
+                    $ T.AnimationPhase Time.animeErase T.ErasePhase'
       else shift_gamePhase state T.FallPhase
 
 
@@ -199,8 +201,8 @@ fall_ojamaPuyo' gs state =  do
           then shift_gamePhase state loopPhase
           else shift_gamePhase state nextPhase
   where
-    loopPhase   = T.AnimationPhase W.amimeTime_drop T.FallPhase'
-    nextPhase   = T.AnimationPhase W.amimeTime_land T.BuildPhase
+    loopPhase   = T.AnimationPhase Time.animeDrop T.FallPhase'
+    nextPhase   = T.AnimationPhase Time.animeLand T.BuildPhase
     
 --------------------------------------------------------------------------------
 --  GameoverPhase   ゲームオーバー時処理

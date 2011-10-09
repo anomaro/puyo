@@ -10,11 +10,10 @@ module Process.Phase.Control
 
 import qualified Control.Monad      as MND
 
-import qualified Common.DataType  as T (Time, Direction(..), GamePhase(DropPhase),
-                                  RotationDirection(..) )
-import qualified Common.Function   as U (neighbor_area, rotate_direction)
+import qualified Common.DataType  as T
+import qualified Common.Function   as U
 import qualified State.Setting as V (GameState, get, GameStateIndex(FallTime))
-import qualified Common.Name    as W (animeTime_rotate, flag_quickTrun)
+import qualified Common.Name    as W (flag_quickTrun)
 
 import State.Player.DataType
 import State.Player.Query   (
@@ -31,6 +30,8 @@ import State.Player.Overwriting (
     renew_playerPuyo,
     shift_gamePhase,
     )
+import qualified Common.Direction       as Direction
+import qualified Common.Time            as Time (Time, animeRotate, count)
 
 --------------------------------------------------------------------------------
 -- 自然落下処理。（移動した場合はTrueを返す。）
@@ -43,21 +44,21 @@ fallNatural_playerPuyo state gs = do
       else fall_puyo state gs
   where
     -- カウンタを進める。
-    count       :: T.Time -> IO()
+    count       :: Time.Time -> IO()
     count timeF =  do
         timeR   <- get_PlayerPuyoRotateTime state
         renew_playerPuyo state Nothing
                                Nothing
                                Nothing
-                               (Just $ timeF - 1)
-                               (Just $ timeR - signum timeR)
+                               (Just $ Time.count timeF)
+                               (Just $ Time.count timeR)
                                Nothing
 
 --------------------------------------------------------------------------------
 -- 操作ぷよの落下移動。（移動した場合はTrueを返す。）
 --------------------------------------------------------------------------------
 fall_puyo           :: PlayerState -> V.GameState -> IO Bool
-fall_puyo state gs  =  reset_fallTime >> move_puyo state T.DDown
+fall_puyo state gs  =  reset_fallTime >> move_puyo state Direction.Down
   where
     -- カウンタをリセットする。
     reset_fallTime :: IO()
@@ -74,7 +75,7 @@ fall_puyo state gs  =  reset_fallTime >> move_puyo state T.DDown
 --------------------------------------------------------------------------------
 -- 操作ぷよの移動。（移動した場合はTrueを返す。）
 --------------------------------------------------------------------------------
-move_puyo :: PlayerState -> T.Direction -> IO Bool
+move_puyo :: PlayerState -> Direction.Area -> IO Bool
 move_puyo state dm  =  do
     flagExistent    <- get_PlayerPuyoExistent state
     if flagExistent then move_puyo' else return False
@@ -85,7 +86,7 @@ move_puyo state dm  =  do
         pos     <- get_PlayerPuyoPosition state
         if move         -- 移動判定 --
           then move_neighbor pos
-          else MND.when (dm == T.DDown)   -- 着地判定 --
+          else MND.when (dm == Direction.Down)   -- 着地判定 --
                     $ (shift_gamePhase state T.DropPhase) >> land_puyo
         return move
       where
@@ -105,7 +106,7 @@ move_puyo state dm  =  do
 --------------------------------------------------------------------------------
 -- 操作ぷよの回転。（移動した場合はTrueを返す。 ※回転した場合ではない。）
 --------------------------------------------------------------------------------
-rotate_puyo :: PlayerState -> T.RotationDirection -> IO(Bool)
+rotate_puyo :: PlayerState -> Direction.Rotation -> IO(Bool)
 rotate_puyo state rd    = do
     (y, x)  <- get_PlayerPuyoPosition       state
     d       <- get_PlayerPuyoDirection      state
@@ -114,9 +115,9 @@ rotate_puyo state rd    = do
     if tt /= 0
       then  return False
       else  do 
-        let d90     = U.rotate_direction rd d
-            d180    = U.rotate_direction rd d90
-            d270    = U.rotate_direction rd d180
+        let d90     = Direction.rotate rd d
+            d180    = Direction.rotate rd d90
+            d270    = Direction.rotate rd d180
         isSpace90   <- is_neighborSpace (y, x) d90  state
         isSpace180  <- is_neighborSpace (y, x) d180 state
         isSpace270  <- is_neighborSpace (y, x) d270 state
@@ -129,16 +130,16 @@ rotate_puyo state rd    = do
             _                   -> rotate d180 rd   >> move_puyo state d
   where
     -- 回転後の状態へ書き換える。
-    rotate :: T.Direction -> T.RotationDirection -> IO()
+    rotate :: Direction.Area -> Direction.Rotation -> IO()
     rotate d rd = do
-        let newRT = if rd == T.RLeft then (-W.animeTime_rotate)
-                                     else W.animeTime_rotate
+        let 
         renew_playerPuyo state Nothing
                                Nothing
                                (Just d)
                                Nothing
-                               (Just newRT)
+                               (Just $ f Time.animeRotate)
                                (Just False)
+      where f = if rd == Direction.Clockwise    then id     else negate
     -- クイックターンの許可。
     permit_quickTurn :: IO()
     permit_quickTurn =  do
@@ -151,7 +152,7 @@ rotate_puyo state rd    = do
 
 --------------------------------------------------------------------------------
 -- 移動できるかどうか判定。（隣接するマスが空白かどうか調べる。）
-is_move :: PlayerState -> T.Direction -> IO Bool
+is_move :: PlayerState -> Direction.Area -> IO Bool
 is_move state dm = do
     pos <- get_PlayerPuyoPosition  state
     dp  <- get_PlayerPuyoDirection state

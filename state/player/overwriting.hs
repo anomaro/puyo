@@ -36,7 +36,6 @@ import State.Player.Query
 import Data.List    (nub)
 import Data.Maybe   (fromMaybe)
 import Control.Monad
-import Control.Applicative
 import qualified Data.IORef         as IORF
 import qualified Data.Array.IO      as AIO
 
@@ -46,6 +45,8 @@ import qualified State.Setting  as V
 
 import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area
+import qualified Common.Direction       as Direction
+import Common.Time  (Time)
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -189,9 +190,9 @@ renew_animationType state p =  do
 renew_playerPuyo :: PlayerState 
                     -> Maybe (T.Color, T.Color) -- （基点ぷよの色、動点ぷよの色）
                     -> Maybe T.AreaPosition     -- 基点ぷよのフィールド座標
-                    -> Maybe T.Direction        -- 動点ぷよの方向
-                    -> Maybe T.Time             -- 自然落下用のカウンタ
-                    -> Maybe T.Time             -- 回転用のカウンタ
+                    -> Maybe Direction.Area     -- 動点ぷよの方向
+                    -> Maybe Time               -- 自然落下用のカウンタ
+                    -> Maybe Time               -- 回転用のカウンタ
                     -> Maybe Bool               -- クイックターンフラグ
                     -> IO ()
 renew_playerPuyo state c p d tf tt qf   = do
@@ -206,12 +207,12 @@ renew_playerPuyo state c p d tf tt qf   = do
 
 -- 完全書き換え
 renew_playerPuyo'   :: PlayerState 
-                    -> (T.Color, T.Color) -- （基点ぷよの色、動点ぷよの色）
-                    -> T.AreaPosition     -- 基点ぷよのフィールド座標
-                    -> T.Direction        -- 動点ぷよの方向
-                    -> T.Time             -- 自然落下用のカウンタ
-                    -> T.Time             -- 回転用のカウンタ
-                    -> Bool               -- クイックターンフラグ
+                    -> (T.Color, T.Color)   -- （基点ぷよの色、動点ぷよの色）
+                    -> T.AreaPosition       -- 基点ぷよのフィールド座標
+                    -> Direction.Area       -- 動点ぷよの方向
+                    -> Time                 -- 自然落下用のカウンタ
+                    -> Time                 -- 回転用のカウンタ
+                    -> Bool                 -- クイックターンフラグ
                     -> IO ()
 renew_playerPuyo' state c p d tf tt qf  =
     flip IORF.writeIORef (PlayerPuyoInfo c p d tf tt qf) 
