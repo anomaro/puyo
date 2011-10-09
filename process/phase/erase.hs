@@ -87,7 +87,7 @@ erase_unionPuyo state p = do
     fff :: T.Color -> Direction.Area -> IO()
     fff color d = do
         area    <- get_fieldStateArea p' state
-        MND.when (Area.isEraseOjamaPuyo area)   $ eraseOjamaPuyo  state p
+        MND.when (Area.isEraseOjamaPuyo area)   $ eraseOjamaPuyo  state p'
         MND.when (Area.isUnionCheckFinished (Just color) area p') 
                                                 $ erase_unionPuyo state p'
       where
