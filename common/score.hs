@@ -12,6 +12,7 @@ module Common.Score
 
 import Data.List (nub)
 import qualified Common.DataType   as T
+import Common.Color (Color)
 
 --------------------------------------------------------------------------------
 --  型
@@ -22,12 +23,11 @@ data ActualScore    = ActualScore
                         { static   :: BaseType  -- おじゃまぷよに換算されたスコア
                         , dynamic  :: BaseType  -- おじゃまぷよに換算されていないスコア
                         }
-type BaseType  = Int           -- スコアの数値の型。 ※2147483647
-
-type Calculation   = ( T.NumOfChain     -- 連鎖数
-                     , [T.NumOfUnion]   -- 連結数
-                     , [T.Color]        -- 消したの色
-                     )
+type BaseType       = Int   -- スコアの数値の型。 ※2147483647
+type Calculation    = ( T.NumOfChain        -- 連鎖数
+                      , [T.NumOfUnion]      -- 連結数
+                      , [Color]             -- 消したの色
+                      )
 
 --------------------------------------------------------------------------------
 --  名前
@@ -49,7 +49,7 @@ expandChain                                 :: Score -> Score
 expandChain (Score sc (cha, _, _))          =  Score sc (cha + 1, [], [])
 
 -- 連結数・色の数を集計
-expandUniCol :: T.NumOfUnion -> T.Color -> Score -> Score
+expandUniCol :: T.NumOfUnion -> Color -> Score -> Score
 expandUniCol u c (Score sc (cha, uns, cls)) = (Score sc (cha, u:uns, c:cls))
 
 -- 落下による得点

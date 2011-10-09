@@ -1,34 +1,32 @@
 -- renderObject.hs
 module Render.Object
-    (
-    GameObject,
-    
-    unitAreaY',
-    unitAreaX',
-    
-    render_gameobject,
-    render_gameobject',
-    
-    objControlPuyoBack,
-    objOjamaPuyo,
-    objPuyo,
-    objPuyo',
-    objBackfield,
-    objFallPoint,
-    objYokokuLv1,
-    objYokokuLv2,
-    objYokokuLv3,
-    objYokokuLv4,
-    objYokokuLv5,
-    objYokokuLv6,
-    )
-    where
+( GameObject
+, unitAreaY'
+, unitAreaX'
+
+, render_gameobject
+, render_gameobject'
+
+, objControlPuyoBack
+, objOjamaPuyo
+, objPuyo
+, objPuyo'
+, objBackfield
+, objFallPoint
+, objYokokuLv1
+, objYokokuLv2
+, objYokokuLv3
+, objYokokuLv4
+, objYokokuLv5
+, objYokokuLv6,
+) where
 
 import qualified Graphics.UI.GLUT   as GLUT
 
-import qualified Common.DataType   as T
-import qualified Common.Name      as W (window_sizeY, window_sizeX)
-import qualified Common.Direction       as Direction
+import qualified Common.DataType    as T
+import qualified Common.Name        as W (window_sizeY, window_sizeX)
+import qualified Common.Direction   as Direction
+import qualified Common.Color       as Color (Color, inGLUT)
 
 --------------------------------------------------------------------------------
 --  型
@@ -87,17 +85,17 @@ objOjamaPuyo    =  do
             $ shape_circle (unitAreaX' * 0.9) (unitAreaY' * 0.9) 0 0 0 12
 
 -- ぷよ
-objPuyo             :: T.Color -> GameObject
+objPuyo             :: Color.Color -> GameObject
 objPuyo color       =  do
-    GLUT.color $ to_glutColor3 color        -- 色を変える。
+    GLUT.color $ Color.inGLUT color
     GLUT.renderPrimitive GLUT.Polygon
         $ mapM_ GLUT.vertex 
             $ shape_circle (unitAreaX' * 0.93) (unitAreaY' * 0.93) 0 0 0 12
 
 -- ぷよ（フィールド上）
-objPuyo'            :: T.Color -> [Direction.Area] -> GameObject
+objPuyo'            :: Color.Color -> [Direction.Area] -> GameObject
 objPuyo' color ds   =  do
-    GLUT.color $ to_glutColor3 color        -- 色を変える。
+    GLUT.color $ Color.inGLUT color
     GLUT.renderPrimitive GLUT.Polygon
         $ mapM_ GLUT.vertex 
             $ shape_circle (unitAreaX' * 0.93) (unitAreaY' * 0.93) 0 0 0 12
@@ -144,9 +142,9 @@ objBackfield    =  do
     size = 0.93
 
 -- 落下予測地点
-objFallPoint    :: T.Color -> GameObject
+objFallPoint    :: Color.Color -> GameObject
 objFallPoint color   =  do
-    GLUT.color $ to_glutColor3 color        -- 色を変える。
+    GLUT.color $ Color.inGLUT color        -- 色を変える。
     GLUT.renderPrimitive GLUT.Quads $ do
         myVertex $ GLUT.Vertex3 (unitAreaX'  * size) (unitAreaY'  * size) 0
         myVertex $ GLUT.Vertex3 (-unitAreaX' * size) (unitAreaY'  * size) 0
@@ -245,17 +243,6 @@ objYokokuLv6   =  do
         myVertex $ GLUT.Vertex3 (es5 4) triPosYDown 0
     triPosYUp   = unitAreaY' / 3
     triPosYDown = -unitAreaY' / 3
-    
---------------------------------------------------------------------------------
--- 色
---------------------------------------------------------------------------------
-to_glutColor3       :: T.Color -> GLUT.Color3 Double
-to_glutColor3 T.Red     = GLUT.Color3 1.0 0.0 0.0
-to_glutColor3 T.Green   = GLUT.Color3 0.0 1.0 0.2
-to_glutColor3 T.Blue    = GLUT.Color3 0.0 0.3 1.0
-to_glutColor3 T.Yellow  = GLUT.Color3 1.0 1.0 0.0
-to_glutColor3 T.Purple  = GLUT.Color3 0.7 0.0 1.0
---to_glutColor3 T.SkyBlue = GLUT.Color3 0.0 0.7 1.0
 
 --------------------------------------------------------------------------------
 --  基本形

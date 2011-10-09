@@ -57,6 +57,7 @@ import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
 import Common.Time  (Time)
 import qualified Common.Score           as Score
+import Common.Color (Color, determine)
 
 --------------------------------------------------------------------------------
 (<$<) :: Functor f => (a -> b) -> (c -> f a) -> (c -> f b)
@@ -78,7 +79,7 @@ get_gamePhase   :: P'.PlayerState -> IO T.GamePhase
 get_gamePhase   =  IORF.readIORef <=< P'.takeout_gamePhaseState
 
 -- ネクストぷよの色を伝える。
-get_nextPuyoColors  :: P'.PlayerState -> IO [T.Color]
+get_nextPuyoColors  :: P'.PlayerState -> IO [Color]
 get_nextPuyoColors  =  IORF.readIORef <=< P'.takeout_nextPuyoState
 
 --------------------------------------------------------------------------------
@@ -140,7 +141,7 @@ get_PlayerPuyoExistent  :: P'.PlayerState -> IO Bool
 get_PlayerPuyoExistent  =  (P'.NonExistent /=) <$< readTakePP
 
 -- 操作ぷよの色の組みを伝える。
-get_PlayerPuyoColors        :: P'.PlayerState -> IO (T.Color,T.Color)
+get_PlayerPuyoColors        :: P'.PlayerState -> IO (Color, Color)
 get_PlayerPuyoColors        =  getPPColor           <$< readTakePP
 
 -- 操作ぷよの基点ぷよのフィールド座標を伝える。
@@ -167,7 +168,7 @@ get_PlayerPuyoQuickTurnFlag =  getPPFlagQuickTurn   <$< readTakePP
 readTakePP :: P'.PlayerState -> IO P'.PlayerPuyo
 readTakePP =  IORF.readIORef <=< P'.takeout_ppuyostate
 
-getPPColor          (P'.PlayerPuyoInfo c _ _ _ _ _)    = c :: (T.Color,T.Color)
+getPPColor          (P'.PlayerPuyoInfo c _ _ _ _ _)    = c :: (Color, Color)
 getPPPosition       (P'.PlayerPuyoInfo _ p _ _ _ _)    = p :: T.AreaPosition
 getPPDirection      (P'.PlayerPuyoInfo _ _ d _ _ _)    = d :: Direction.Area
 getPPFallTime       (P'.PlayerPuyoInfo _ _ _ f _ _)    = f :: Time
@@ -236,7 +237,7 @@ create_nextPuyoState  gs    =  do
     seed    <- U.runRandom maxBound
     colors  <- V.get_ColorPattern gs
     IORF.newIORef 
-        $ map (V.makeColor colors) $ U.makeRandoms (V.get V.Color gs - 1) seed
+        $ map (determine colors) $ U.makeRandoms (V.get V.Color gs - 1) seed
         
 -- ネクストぷよをコピーする。（２Ｐ側のネクストぷよ状態を作るときに使う。）
 copy_nextPuyoState :: P'.NextPuyoState -> IO P'.NextPuyoState

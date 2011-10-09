@@ -45,12 +45,12 @@ import Data.Maybe (fromJust)
 
 import Standardizable
 import Common.DataType
---import Common.Name
+
 import qualified State.Setting  as V
 
---import qualified Common.Name      as W
 import qualified Common.Direction   as Direction
 import qualified Common.Time        as Time
+import Common.Color (Color)
 
 --------------------------------------------------------------------------------
 --  Œ^

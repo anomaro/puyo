@@ -15,6 +15,7 @@ import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
 import Common.Time  (Time)
 import Common.Score (Score)
+import Common.Color (Color)
 --------------------------------------------------------------------------------
 --  プレイヤー状態
 --------------------------------------------------------------------------------
@@ -34,7 +35,7 @@ type FieldState      = AIO.IOArray T.AreaPosition Area.Area
 type PlayerPuyoState = IORF.IORef PlayerPuyo  
 data PlayerPuyo
     = NonExistent
-    | PlayerPuyoInfo    (T.Color,T.Color)   -- （基点ぷよの色、動点ぷよの色）
+    | PlayerPuyoInfo    (Color, Color)      -- （基点ぷよの色、動点ぷよの色）
                         T.AreaPosition      -- 基点ぷよのフィールド座標
                         Direction.Area      -- 動点ぷよの方向
                         Time                -- 自然落下用のカウンタ
@@ -42,7 +43,7 @@ data PlayerPuyo
                         Bool                -- クイックターンフラグ
         deriving (Show, Eq)
         
-type NextPuyoState   = IORF.IORef [T.Color]   
+type NextPuyoState   = IORF.IORef [Color]   
           
 type ScoreState      = IORF.IORef Score 
 

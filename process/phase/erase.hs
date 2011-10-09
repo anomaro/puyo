@@ -12,6 +12,7 @@ import qualified Common.PlayerIdentity  as Identity (against, territory)
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
 import qualified Common.Score           as Score
+import Common.Color (Color)
 
 import qualified Common.DataType   as T
 import qualified Common.Function    as U
@@ -84,7 +85,7 @@ erase_unionPuyo state p = do
     renew_fieldArea state p $ Area.eracingPuyo (Just $ Area.color area)
     mapM_ (fff $ Area.color area) Direction.areas
   where
-    fff :: T.Color -> Direction.Area -> IO()
+    fff :: Color -> Direction.Area -> IO()
     fff color d = do
         area    <- get_fieldStateArea p' state
         MND.when (Area.isEraseOjamaPuyo area)   $ eraseOjamaPuyo  state p'
@@ -103,7 +104,7 @@ check_union state p    = do
     renew_fieldArea state p $ Area.unionCheckCompletion area
     MND.foldM (fff $ Area.color area) 1 Direction.areas
   where
-    fff :: T.Color -> T.NumOfUnion -> Direction.Area -> IO T.NumOfUnion
+    fff :: Color -> T.NumOfUnion -> Direction.Area -> IO T.NumOfUnion
     fff color n d = do
         area    <- get_fieldStateArea p' state
         if Area.isUnionCheck (Just color) area p'

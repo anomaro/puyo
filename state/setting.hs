@@ -23,8 +23,6 @@ module State.Setting
     yokokuLv4,
     yokokuLv5,
     yokokuLv6,
-    
-    makeColor,
     )
     where
 
@@ -34,8 +32,9 @@ module State.Setting
 import qualified Common.DataType              as T
 import qualified Common.Function           as U
 import qualified Common.Name                 as W
+import qualified Common.Color           as Color
 
-import qualified Data.Vector            as VC
+--import qualified Data.Vector            as VC
 import qualified Data.Vector.Unboxed    as VCU
 
 --------------------------------------------------------------------------------
@@ -56,9 +55,8 @@ data GameStateIndex     -- GameStateの値の種類を表す。
         | FieldSizeX    -- フィールドサイズ（横）（可視範囲のサイズ）
         | NextPuyoView  -- ネクストぷよ以降の表示数
         deriving (Show, Eq, Ord, Enum, Bounded)
-
-type ColorPattern   = IO ColorList 
-type ColorList      = VC.Vector T.Color
+        
+type ColorPattern   = IO Color.ColorAssortment
 
 --------------------------------------------------------------------------------
 --  既定値
@@ -84,7 +82,7 @@ defaultValue NextPuyoView   =  1
 -- 境界数
 limitValue f FallTime       = f 1   100
 limitValue f ErasePuyo      = f 1   100
-limitValue f Color          = f 1   $ fromEnum (maxBound :: T.Color)
+limitValue f Color          = f 1   Color.maxNumber
 limitValue f OjamaRate      = f 1   100
 limitValue f MarginTime     = f 1   300
 limitValue f FieldSizeY     = f 1   48
@@ -171,42 +169,8 @@ yokokuLv6 gs    | fieldSizeX > 1    = 2 * yokokuLv5 gs
 --------------------------------------------------------------------------------
 --  色パターン
 --------------------------------------------------------------------------------
--- 色を決める。
-makeColor       :: ColorList -> Int -> T.Color
-makeColor cs n  =  cs VC.! n
-
 -- ランダムな色パターンを作る。
 randomColorPattern  :: T.NumOfColors -> ColorPattern
 randomColorPattern  =  \noc          -> do
-    val     <- U.runRandom $ totalPerms noc - 1
-    return $ colorP !! val    
-
--- 色の順列の列挙
-colorP  :: [ColorList]
-colorP  =  map VC.fromList $ perms $ map toEnum [0..(limitValue max Color - 1)]
-  where
-    perms           :: [a] -> [[a]]
-    perms []        =  [[]]
-    perms (x:xs)    = concat $ map (interleave x) (perms xs)
-      where
-        interleave          :: a -> [a] -> [[a]]
-        interleave x []     =  [[x]]
-        interleave x (y:ys) = (x : y : ys) : map (y :) (interleave x ys)
-
-totalPerms n    = product [1..n]
-
--- 色数の組み合わせ。（連想配列のリスト・基本色の赤・黄・緑・青・紫の５色。）
---colorC  :: Int -> [ColorList]
---colorC  =  map VC.fromList . c (map toEnum [0..(limitValue max Color - 1)])
---colorC  =  map VC.fromList . c [T.Red, T.Green, T.Blue, T.Yellow, T.Purple]
---  where
---    c :: [a] -> Int -> [[a]]    -- 組み合わせ
---    c _ 0       = [[]]
---    c [] _      = []
---    c (x:xs) n  = map (x:) (c xs (n-1)) ++ c xs n
-    
--- 色数の組み合わせの総数。
---totalComb   :: Int -> Int
---totalComb n =
---    let maxColor = limitValue max Color
---    in  product [(maxColor - n + 1)..maxColor] `quot` product [1..n]
+    val     <- U.runRandom $ Color.totalAssortments noc - 1
+    return $ Color.assortments !! val

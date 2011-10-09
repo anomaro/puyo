@@ -34,6 +34,7 @@ import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
 import qualified Common.Time            as Time (Time, animeRotate)
 import qualified Common.Score           as Score
+import Common.Color (Color)
 
 import qualified Common.DataType   as T
 import qualified Common.Function    as U
@@ -199,7 +200,7 @@ render_nextPuyo gs state    =  do
     colors <- get_nextPuyoColors state
     render_nextPuyo' colors $ V.get V.NextPuyoView gs
   where
-    render_nextPuyo' :: [T.Color] -> T.NumOfPuyos -> IO()
+    render_nextPuyo' :: [Color] -> T.NumOfPuyos -> IO()
     render_nextPuyo' _          0   = return ()
     render_nextPuyo' (cb:cm:cs) n   = do
         let trt = Identity.territory $ get_playerIdentity state
@@ -229,7 +230,7 @@ render_playerPuyo gs state  =  do
     render_fieldObject' (y, x) fallTime d rotateTime color
   where
     render_fieldObject' :: T.AreaPosition -> Time.Time
-                           -> Direction.Area -> Time.Time -> (T.Color, T.Color)
+                           -> Direction.Area -> Time.Time -> (Color, Color)
                            -> IO()
     render_fieldObject' (y, x) fallTime d rotateTime (cb, cm) = do  
         let fallTime'   = V.get V.FallTime gs

@@ -30,6 +30,7 @@ import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area  (isPuyo)
 import qualified Common.Direction       as Direction
 import qualified Common.Score           as Score (refresh)
+import Common.Color (Color)
 
 --------------------------------------------------------------------------------
 --  操作ぷよを生成
@@ -51,7 +52,7 @@ build_playerPuyo gs state   =  do
     trt     = Identity.territory $ get_playerIdentity state
 
 -- ネクストぷよの色を調べて取り出す。
-pick_nextPuyoColor  :: P.PlayerState -> IO (T.Color, T.Color)
+pick_nextPuyoColor  :: P.PlayerState -> IO (Color, Color)
 pick_nextPuyoColor state    = do
     colors  <- get_nextPuyoColors state
     eat_nextPuyo state 2

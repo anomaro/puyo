@@ -20,15 +20,6 @@ type AreaPosition   = (PositionY, PositionX)
 type PositionY  = Int
 type PositionX  = Int 
 
--- 色
-data Color  = Red 
-            | Green
-            | Blue 
-            | Yellow 
-            | Purple 
-            | AnyColor
-        deriving (Show, Eq, Ord, Enum, Bounded) --            | SkyBlue
-
 -- 数
 type NumOfPuyos     = Int   -- 組みぷよの数
 type NumOfPuyo      = Int   -- ぷよの数
@@ -50,11 +41,3 @@ data GamePhase  = BuildPhase    -- ぷよ生成
                 | GameOverPhase -- ゲームオーバー
                 | AnimationPhase  Time GamePhase  -- 硬直時間と次の状態遷移
         deriving (Show, Eq)
-
---------------------------------------------------------------------------------
---  スコア
---------------------------------------------------------------------------------
---data Score  = Score StaticScore DynamicScore
---type StaticScore    = ScoreBaseType     -- おじゃまぷよに換算されたスコア
---type DynamicScore   = ScoreBaseType     -- おじゃまぷよに換算されていないスコア
---type ScoreBaseType  = Int           -- スコアの数値の型。 ※2147483647

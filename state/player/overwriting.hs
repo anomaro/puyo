@@ -46,6 +46,7 @@ import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
 import Common.Time  (Time)
 import qualified Common.Score           as Score
+import Common.Color (Color)
 
 --------------------------------------------------------------------------------
 --  状態書き換え
@@ -133,7 +134,7 @@ renew_animationType state p =  do
 --------------------------------------------------------------------------------
 -- 部分書き換え
 renew_playerPuyo :: PlayerState 
-                    -> Maybe (T.Color, T.Color) -- （基点ぷよの色、動点ぷよの色）
+                    -> Maybe (Color, Color)     -- （基点ぷよの色、動点ぷよの色）
                     -> Maybe T.AreaPosition     -- 基点ぷよのフィールド座標
                     -> Maybe Direction.Area     -- 動点ぷよの方向
                     -> Maybe Time               -- 自然落下用のカウンタ
@@ -152,7 +153,7 @@ renew_playerPuyo state c p d tf tt qf   = do
 
 -- 完全書き換え
 renew_playerPuyo'   :: PlayerState 
-                    -> (T.Color, T.Color)   -- （基点ぷよの色、動点ぷよの色）
+                    -> (Color, Color)       -- （基点ぷよの色、動点ぷよの色）
                     -> T.AreaPosition       -- 基点ぷよのフィールド座標
                     -> Direction.Area       -- 動点ぷよの方向
                     -> Time                 -- 自然落下用のカウンタ

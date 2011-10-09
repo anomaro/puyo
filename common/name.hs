@@ -8,26 +8,9 @@ import qualified Common.DataType   as T
 --------------------------------------------------------------------------------
 --  定数
 --------------------------------------------------------------------------------
----- フレームレート。この値が約１秒を表す。
---frame_rate      = 60  * speed :: T.Time   -- (60)
-
 --  ウィンドウサイズ 
 window_sizeX    =  800  :: GLUT.GLsizei  {- 600, 800 -}
 window_sizeY    =  600  :: GLUT.GLsizei  {- 450, 600 -}
-
----- 速度
---speed               = 1
-
----- 入力硬直時間。
---inputTime_moveX     = 6   * speed   :: T.Time   -- ぷよを横移動させたとき。
---inputTimeConfig     = 3   * speed   :: T.Time   -- 設定画面でカーソル移動時。
-
----- アニメーション硬直時間。
---amimeTime_move      = 1   * speed   :: T.Time   -- 操作ぷよを移動させたとき。
---animeTime_rotate    = 5   * speed   :: T.Time   -- 操作ぷよを回転したとき。
---amimeTime_land      = 20  * speed   :: T.Time   -- 操作ぷよを着地させたとき。
---amimeTime_drop      = 2   * speed   :: T.Time   -- ちぎり落下のとき。
---amimeTime_erase     = 40  * speed   :: T.Time   -- ぷよ消滅のとき。
 
 -- 隕石ぷよのおじゃまぷよの予告段数。
 sizeYyokokuLv3  = 5         :: T.PositionY
