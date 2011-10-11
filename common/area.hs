@@ -51,6 +51,7 @@ import qualified State.Setting  as V
 import qualified Common.Direction   as Direction
 import qualified Common.Time        as Time
 import Common.Color (Color)
+import qualified Common.Field           as Field
 
 --------------------------------------------------------------------------------
 --  型
@@ -170,20 +171,20 @@ eracingPuyo (Just c)    =  Puyo c EraseFlag animeStartErasing
 --------------------------------------------------------------------------------
 --  
 --------------------------------------------------------------------------------
-isUnionCheck            :: Maybe Color -> Area -> AreaPosition -> Bool
+isUnionCheck            :: Maybe Color -> Area -> Field.Position -> Bool
 isUnionCheck            =  isTarget NotYet
 
-isUnionCheckFinished    :: Maybe Color -> Area -> AreaPosition -> Bool
+isUnionCheckFinished    :: Maybe Color -> Area -> Field.Position -> Bool
 isUnionCheckFinished    =  isTarget Completion
 
-isReplacedSpace         :: Area -> AreaPosition -> Bool
+isReplacedSpace         :: Area -> Field.Position -> Bool
 isReplacedSpace         =  isTarget EraseFlag Nothing
 
 -- 対象のエリアが結合チェック・消滅の対象かどうか判定。
-isTarget :: UnionCheck -> Maybe Color -> Area -> AreaPosition -> Bool
-isTarget u c (Puyo c' u' _) (y, _) | y >= V.topFieldRank && u' == u
+isTarget :: UnionCheck -> Maybe Color -> Area -> Field.Position -> Bool
+isTarget u c (Puyo c' u' _) (y, _) | y >= Field.topRank && u' == u
         = c == Nothing || c' == fromJust c
-isTarget EraseFlag Nothing (Ojama EraseFlag _)  (y, _)  = y >= V.topFieldRank
+isTarget EraseFlag Nothing (Ojama EraseFlag _)  (y, _)  = y >= Field.topRank
 isTarget _ _ _ _                                        = False
 
 isEraseOjamaPuyo                    :: Area -> Bool
@@ -202,7 +203,7 @@ isLink (Puyo _ u (Erasing _))   =  u == NotYet  || u == EraseFlag
 isLink _                        =  False
 
 type  PartialMorph a = Double -> Double -> Double -> Double -> Double -> a
-morph       :: AnimationType -> PositionY -> Maybe ( PartialMorph a  -> a )
+morph       :: AnimationType -> Field.Rank -> Maybe ( PartialMorph a  -> a )
 morph (Landing t pow) height    
     = Just (($ 0) . ($ scaleY) . ($ 1.2 * scaleX) . ($ moveY) . ($ 0))
       where
@@ -226,7 +227,7 @@ morph _ _                       = Just (($ 0) . ($ 1) . ($ 1) . ($ 0) . ($ 0))
 --------------------------------------------------------------------------------
 --  drop
 --------------------------------------------------------------------------------
-landPuyo    :: Color -> AreaPosition -> Direction.Area -> Bool -> (Area, Power)
+landPuyo :: Color -> Field.Position -> Direction.Area -> Bool -> (Area, Power)
 landPuyo col pos@(y, _) dir isNeighborSpace = (Puyo col NotYet anime, power)
   where
     anime   = (animeStartLanding power) `orStandardIf` 

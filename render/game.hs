@@ -35,13 +35,12 @@ import qualified Common.Direction       as Direction
 import qualified Common.Time            as Time (Time, animeRotate)
 import qualified Common.Score           as Score
 import Common.Color (Color)
+import qualified Common.Field           as Field
 
 import qualified Common.DataType   as T
 import qualified Common.Function    as U
 import qualified State.Setting  as V
-import qualified Common.Name      as W (
-    sizeYyokokuLv3,
-    )
+
 import Render.Object
 
 --------------------------------------------------------------------------------
@@ -72,8 +71,8 @@ unitAreaX   = (*) unitAreaX' . reviseViewSize   :: V.GameState -> Double
 reviseViewSize      :: V.GameState -> Double
 reviseViewSize gs   =  min ratioY ratioX
   where
-    ratioY  = defaultViewFieldSizeY / fromIntegral (V.fieldSizeY' gs)
-    ratioX  = defaultViewFieldSizeX / fromIntegral (V.fieldSizeX' gs)
+    ratioY  = defaultViewFieldSizeY / fromIntegral (Field.sizeRank gs)
+    ratioX  = defaultViewFieldSizeX / fromIntegral (Field.sizeLine gs)
 
 -- 表示フィールドサイズ既定値。
 defaultViewFieldSizeY   = 16    :: Double
@@ -87,7 +86,7 @@ field_pointX :: Identity.Territory -> V.GameState -> Double
 field_pointX trt gs = Identity.pick trt (l, r)
   where
     l = - 1 + unitAreaX gs
-    r = 1 - unitAreaX gs - (unitAreaX gs * fromIntegral (V.fieldSizeX' gs - 1)) * 2
+    r = 1 - unitAreaX gs - (unitAreaX gs * fromIntegral (Field.sizeLine gs - 1)) * 2
 
 --(unitAreaX gs * (x' - 1) ) * 2
 
@@ -102,7 +101,7 @@ render_wins gs state gdc    =  do
   where
     trt = Identity.territory $ get_playerIdentity state
     xm  = field_pointX trt gs + unitAreaX gs
-    ym  = field_pointY gs - unitAreaY gs * 2 * (fromIntegral $ V.fieldSizeY' gs)
+    ym  = field_pointY gs - unitAreaY gs * 2 * (fromIntegral $ Field.sizeRank gs)
     scale       = 0.001
     objWins     = GLUT.renderString GLUT.Roman $ show wins
       where
@@ -116,7 +115,7 @@ render_yokoku gs state  =  do
     numOfOjama  <- get_yokoku trt state
     zipWithM_ f targetArea $ objs numOfOjama
   where
-    targetArea  = [(V.hidingFieldRank, x + 1) | x <- targetPosX]
+    targetArea  = [(Field.hidingBottomRank, x + 1) | x <- targetPosX]
     targetPosX  = [1..fieldSizeX]
     fieldSizeX  = V.get V.FieldSizeX gs
     objs n      = reverse $ yokokuKinds' n gs
@@ -127,7 +126,7 @@ render_yokoku gs state  =  do
 yokokuKinds'    :: T.NumOfPuyo -> V.GameState -> [GameObject]
 yokokuKinds' n gs   = yokokuKinds n 0 gs []
   where
-    yokokuKinds :: T.NumOfPuyo -> T.PositionX -> V.GameState -> [GameObject]
+    yokokuKinds :: T.NumOfPuyo -> Field.Line -> V.GameState -> [GameObject]
                 -> [GameObject]
     yokokuKinds 0 x gs objs = objs
     yokokuKinds n x gs objs
@@ -155,7 +154,7 @@ render_score gs state   =  do
     render_gameobject' (GLUT.Vector3 xm ym 0) scale scale 0 objScore
   where
     xm  = field_pointX (Identity.territory $ get_playerIdentity state) gs + unitAreaX gs
-    ym  = field_pointY gs - unitAreaY gs * 2 * (fromIntegral $ V.fieldSizeY' gs)
+    ym  = field_pointY gs - unitAreaY gs * 2 * (fromIntegral $ Field.sizeRank gs)
     scale       = 0.001
     objScore    = do
         score <- get_score state >>= return . Score.display
@@ -173,22 +172,22 @@ render_fallPoint gs state   =  do
     bottomPosB  <- bottomArea pos
     bottomPosM  <- if d == Direction.Up || d == Direction.Down
                     then return bottomPosB
-                    else bottomArea $ U.neighbor_area d pos
+                    else bottomArea $ Field.neighbor d pos
     render_fieldObject gs trt (if d == Direction.Down 
-                                then U.neighbor_area Direction.Up bottomPosB
+                                then Field.neighbor Direction.Up bottomPosB
                                 else bottomPosB         
                                ) $ objFallPoint cb
     render_fieldObject gs trt (if d == Direction.Up
-                                then U.neighbor_area Direction.Up bottomPosM
+                                then Field.neighbor Direction.Up bottomPosM
                                 else bottomPosM         
                                ) $ objFallPoint cm
     return ()
   where
     -- その列の接地エリア
-    bottomArea :: T.AreaPosition -> IO T.AreaPosition
+    bottomArea :: Field.Position -> IO Field.Position
     bottomArea pos    = do
         b   <- is_neighborSpace pos Direction.Down state
-        if b    then bottomArea $ U.neighbor_area Direction.Down pos
+        if b    then bottomArea $ Field.neighbor Direction.Down pos
                 else return pos
     trt = Identity.territory $ get_playerIdentity state
 
@@ -205,9 +204,9 @@ render_nextPuyo gs state    =  do
     render_nextPuyo' (cb:cm:cs) n   = do
         let trt = Identity.territory $ get_playerIdentity state
             n'  = (V.get V.NextPuyoView gs - n) * 2
-            y   = V.topFieldRank + n'
+            y   = Field.topRank + n'
             x   = if trt == Identity.Left 
-                    then V.fieldSizeX' gs + 1
+                    then Field.sizeLine gs + 1
                     else 0
             mx  = if trt == Identity.Left 
                     then unitAreaX gs / 2 * fromIntegral (n'- 2)
@@ -229,7 +228,7 @@ render_playerPuyo gs state  =  do
     
     render_fieldObject' (y, x) fallTime d rotateTime color
   where
-    render_fieldObject' :: T.AreaPosition -> Time.Time
+    render_fieldObject' :: Field.Position -> Time.Time
                            -> Direction.Area -> Time.Time -> (Color, Color)
                            -> IO()
     render_fieldObject' (y, x) fallTime d rotateTime (cb, cm) = do  
@@ -267,7 +266,7 @@ rotateGap gs direction rotateTime  =
 --  フィールド背景描画
 --------------------------------------------------------------------------------
 render_backfield            :: V.GameState -> PlayerState -> IO()
-render_backfield gs state   =  MND.mapM_ f $ V.fieldArrayIndices gs
+render_backfield gs state   =  MND.mapM_ f $ Field.arrayIndices gs
   where
     trt = Identity.territory $ get_playerIdentity state
     f p = render_fieldObject gs trt p objBackfield
@@ -277,7 +276,7 @@ render_backfield gs state   =  MND.mapM_ f $ V.fieldArrayIndices gs
 --------------------------------------------------------------------------------
 -- フィールドを描画
 render_field            :: V.GameState -> PlayerState -> IO()
-render_field gs state   =  MND.mapM_ f $ V.fieldArrayIndices gs
+render_field gs state   =  MND.mapM_ f $ Field.arrayIndices gs
   where
     f p =  renew_animationType state p         -- アニメーション状態の更新。 
            >> (matching =<< get_fieldStateArea p state)
@@ -292,7 +291,7 @@ render_field gs state   =  MND.mapM_ f $ V.fieldArrayIndices gs
             >>= render_fieldPuyo gs trt animeTime p . objPuyo' (Area.color area)
 
 -- 隣接したエリアを調べて、同じ色のぷよがあった方向のリストを得る。
-neighborSameColorPuyo           :: Area.Area -> T.AreaPosition -> PlayerState 
+neighborSameColorPuyo           :: Area.Area -> Field.Position -> PlayerState 
                                 -> IO[Direction.Area]
 neighborSameColorPuyo area p state
   | not (Area.isLink area) = return []
@@ -300,7 +299,7 @@ neighborSameColorPuyo area p state
   where
     ffff    :: [Direction.Area] -> Direction.Area -> IO[Direction.Area]
     ffff acc d  =  do
-        area' <- get_fieldStateArea (U.neighbor_area d p) state
+        area' <- get_fieldStateArea (Field.neighbor d p) state
         if (Area.isLink area' && Area.color area == Area.color area')
           then return (d : acc)
           else return acc
@@ -310,23 +309,23 @@ neighborSameColorPuyo area p state
 --------------------------------------------------------------------------------
 -- フィールドのぷよの描画。（色ぷよ・おじゃまぷよ）
 render_fieldPuyo    :: V.GameState -> Identity.Territory -> Area.AnimationType 
-                    -> T.AreaPosition -> GameObject -> IO()
+                    -> Field.Position -> GameObject -> IO()
 render_fieldPuyo gs trt anime pos@(y, _) obj
     = case Area.morph anime height of
         Nothing -> return ()
         Just ff -> ff (render_fieldObject' gs trt pos) $ obj
       where
         height      = fieldSizeY - fromIntegral y - 1   -- 高さ
-        fieldSizeY  = fromIntegral $ V.fieldSizeY' gs 
+        fieldSizeY  = fromIntegral $ Field.sizeRank gs 
 
 
 -- フィールド座標とオブジェクトを指定して、その位置に描画する。
-render_fieldObject  :: V.GameState -> Identity.Territory -> T.AreaPosition
+render_fieldObject  :: V.GameState -> Identity.Territory -> Field.Position
                     -> GameObject -> IO()
 render_fieldObject gs trt p obj = render_fieldObject' gs trt p 0 0 1 1 0 obj
 
 
-render_fieldObject' :: V.GameState -> Identity.Territory -> T.AreaPosition ->
+render_fieldObject' :: V.GameState -> Identity.Territory -> Field.Position ->
                         GLUT.GLdouble -> GLUT.GLdouble ->
                         GLUT.GLdouble -> GLUT.GLdouble ->
                         GLUT.GLdouble -> GameObject -> IO()

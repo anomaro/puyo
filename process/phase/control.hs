@@ -32,6 +32,7 @@ import State.Player.Overwriting (
     )
 import qualified Common.Direction       as Direction
 import qualified Common.Time            as Time (Time, animeRotate, count)
+import qualified Common.Field           as Field (neighbor)
 
 --------------------------------------------------------------------------------
 -- 自然落下処理。（移動した場合はTrueを返す。）
@@ -91,7 +92,7 @@ move_puyo state dm  =  do
         return move
       where
         move_neighbor p = renew_playerPuyo state Nothing
-                                                 (Just $ U.neighbor_area dm p)
+                                                 (Just $ Field.neighbor dm p)
                                                  Nothing
                                                  Nothing
                                                  Nothing
@@ -158,5 +159,5 @@ is_move state dm = do
     dp  <- get_PlayerPuyoDirection state
     result_basePuyo <- is_neighborSpace pos dm state
     if result_basePuyo
-      then is_neighborSpace (U.neighbor_area dp pos) dm state
+      then is_neighborSpace (Field.neighbor dp pos) dm state
       else return False

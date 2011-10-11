@@ -32,6 +32,7 @@ import State.Player.Overwriting (
 
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
+import qualified Common.Field           as Field
 
 --------------------------------------------------------------------------------
 -- 操作ぷよの着地
@@ -47,20 +48,20 @@ land_puyo state =  do
         (cb, cm)    <- get_PlayerPuyoColors     state
         pos@(y,_)   <- get_PlayerPuyoPosition   state
         d           <- get_PlayerPuyoDirection  state
-        let pos'@(y',_) = U.neighbor_area d pos
+        let pos'@(y',_) = Field.neighbor d pos
         boolb   <- is_neighborSpace pos  Direction.Down state
         boolm   <- is_neighborSpace pos' Direction.Down state
         let (areaB, powerB) = Area.landPuyo cb pos d boolb
             (areaM, powerM) = Area.landPuyo cm pos' (Direction.inversion d) boolm
 
-        MND.when (y  >= V.hidingFieldRank) $ renew_fieldArea state pos  areaB
-        MND.when (y' >= V.hidingFieldRank) $ renew_fieldArea state pos' areaM
+        MND.when (y  >= Field.hidingBottomRank) $ renew_fieldArea state pos  areaB
+        MND.when (y' >= Field.hidingBottomRank) $ renew_fieldArea state pos' areaM
         
-        areaB'  <- get_fieldStateArea (U.neighbor_area Direction.Down pos ) state
-        areaM'  <- get_fieldStateArea (U.neighbor_area Direction.Down pos') state
+        areaB'  <- get_fieldStateArea (Field.neighbor Direction.Down pos ) state
+        areaM'  <- get_fieldStateArea (Field.neighbor Direction.Down pos') state
         
-        transmitAnimeLanding powerB areaB' (U.neighbor_area Direction.Down pos ) state
-        transmitAnimeLanding powerM areaM' (U.neighbor_area Direction.Down pos') state
+        transmitAnimeLanding powerB areaB' (Field.neighbor Direction.Down pos ) state
+        transmitAnimeLanding powerM areaM' (Field.neighbor Direction.Down pos') state
 
 --------------------------------------------------------------------------------
 -- ちぎり落下
@@ -71,16 +72,16 @@ drop_puyo gs state  =
   where
     -- ちぎり落下の適用範囲。
     fieldArray_indices
-        =[(y, x) | x <- [2..(V.fieldSizeX' gs - 1)],
-                   let sizeY = V.fieldSizeY' gs,
-                   y <- [(sizeY - 1), (sizeY - 2) .. V.hidingFieldRank] ]
-    fff     :: Bool -> T.AreaPosition -> IO Bool
+        =[(y, x) | x <- [2..(Field.sizeLine gs - 1)],
+                   let sizeY = Field.sizeRank gs,
+                   y <- [(sizeY - 1), (sizeY - 2) .. Field.hidingBottomRank] ]
+    fff     :: Bool -> Field.Position -> IO Bool
     fff b p =  do
         b'  <- drop_areaPuyo  p
         return $ b || b'
       where    
         -- １つのぷよを１エリア分落下させる。接地ぷよからの高さを返す。
-        drop_areaPuyo   :: T.AreaPosition -> IO Bool
+        drop_areaPuyo   :: Field.Position -> IO Bool
         drop_areaPuyo p =  do
             areaObj    <- get_fieldStateArea p state 
             flagSpace  <- is_neighborSpace p Direction.Down state
@@ -101,14 +102,14 @@ drop_puyo gs state  =
               else do
                 return False
           where
-            p'@(y', _)  = U.neighbor_area Direction.Down p
-            p'' = U.neighbor_area Direction.Down p'
+            p'@(y', _)  = Field.neighbor Direction.Down p
+            p'' = Field.neighbor Direction.Down p'
 
 --------------------------------------------------------------------------------
 -- アニメーションタイプ
 --------------------------------------------------------------------------------
 -- アニメーションタイプを書き換える。
-rewriteAnimation   :: PlayerState -> T.AreaPosition 
+rewriteAnimation   :: PlayerState -> Field.Position 
                         -> Area.Area -> Area.AnimationType -> IO()
 rewriteAnimation s p a anime
   | Area.isPuyo a   = renew_fieldArea s p $ Area.modifyAnime (const anime) a
@@ -116,7 +117,7 @@ rewriteAnimation s p a anime
 
 
 -- 落下があった列のぷよをアニメーションさせる。
-transmitAnimeLanding    :: Area.Power -> Area.Area -> T.AreaPosition
+transmitAnimeLanding    :: Area.Power -> Area.Area -> Field.Position
                         -> PlayerState -> IO()
 transmitAnimeLanding 0 _     _ _    = return ()
 transmitAnimeLanding a area p state = MND.when (Area.isNoAnime area)
@@ -127,6 +128,6 @@ transmitAnimeLanding a area p state = MND.when (Area.isNoAnime area)
         area'   <- get_fieldStateArea p' state
         transmitAnimeLanding (a - 1) area' p' state
       where
-        p' = U.neighbor_area Direction.Down p
+        p' = Field.neighbor Direction.Down p
 
 defaultLanding  = Area.animeStartLanding Area.defauletPower

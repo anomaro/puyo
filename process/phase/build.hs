@@ -31,6 +31,7 @@ import qualified Common.Area            as Area  (isPuyo)
 import qualified Common.Direction       as Direction
 import qualified Common.Score           as Score (refresh)
 import Common.Color (Color)
+import qualified Common.Field           as Field
 
 --------------------------------------------------------------------------------
 --  ‘€ì‚Õ‚æ‚ð¶¬
@@ -48,7 +49,7 @@ build_playerPuyo gs state   =  do
                             False
   where
     -- ‚Õ‚æ¶¬“_
-    build_Area  = U.neighbor_area Direction.Up $ V.criticalArea gs
+    build_Area  = Field.neighbor Direction.Up $ Field.critical gs
     trt     = Identity.territory $ get_playerIdentity state
 
 -- ƒlƒNƒXƒg‚Õ‚æ‚ÌF‚ð’²‚×‚ÄŽæ‚èo‚·B
@@ -66,7 +67,7 @@ pick_nextPuyoColor state    = do
 -- ”s–k”»’è i”s–k‚µ‚Ä‚¢‚½‚çA”s–kðŒ‚ð‘‚«Š·‚¦True‚ð•Ô‚·Bj
 checkLose           :: V.GameState -> P.PlayerState -> IO Bool
 checkLose gs state  =  do
-    area <- get_fieldStateArea (V.criticalArea gs) state
+    area <- get_fieldStateArea (Field.critical gs) state
     when (Area.isPuyo area) $ renewLoseFlag True trt state
     return $ Area.isPuyo area
   where

@@ -47,6 +47,7 @@ import qualified Common.Direction       as Direction
 import Common.Time  (Time)
 import qualified Common.Score           as Score
 import Common.Color (Color)
+import qualified Common.Field           as Field (Position)
 
 --------------------------------------------------------------------------------
 --  状態書き換え
@@ -118,12 +119,12 @@ renewScore f state  =
 --  フィールド状態更新
 --------------------------------------------------------------------------------
 -- エリアを更新する。
-renew_fieldArea :: PlayerState -> T.AreaPosition -> Area.Area -> IO()
+renew_fieldArea :: PlayerState -> Field.Position -> Area.Area -> IO()
 renew_fieldArea state p area    =
     takeout_fieldstate state >>= \stateF -> AIO.writeArray stateF p area
 
 -- アニメーション状態を更新する。
-renew_animationType :: PlayerState -> T.AreaPosition -> IO()
+renew_animationType :: PlayerState -> Field.Position -> IO()
 renew_animationType state p =  do
     stateF  <- takeout_fieldstate state
     area    <- get_fieldStateArea p state
@@ -135,7 +136,7 @@ renew_animationType state p =  do
 -- 部分書き換え
 renew_playerPuyo :: PlayerState 
                     -> Maybe (Color, Color)     -- （基点ぷよの色、動点ぷよの色）
-                    -> Maybe T.AreaPosition     -- 基点ぷよのフィールド座標
+                    -> Maybe Field.Position     -- 基点ぷよのフィールド座標
                     -> Maybe Direction.Area     -- 動点ぷよの方向
                     -> Maybe Time               -- 自然落下用のカウンタ
                     -> Maybe Time               -- 回転用のカウンタ
@@ -154,7 +155,7 @@ renew_playerPuyo state c p d tf tt qf   = do
 -- 完全書き換え
 renew_playerPuyo'   :: PlayerState 
                     -> (Color, Color)       -- （基点ぷよの色、動点ぷよの色）
-                    -> T.AreaPosition       -- 基点ぷよのフィールド座標
+                    -> Field.Position       -- 基点ぷよのフィールド座標
                     -> Direction.Area       -- 動点ぷよの方向
                     -> Time                 -- 自然落下用のカウンタ
                     -> Time                 -- 回転用のカウンタ

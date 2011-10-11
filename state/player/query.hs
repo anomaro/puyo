@@ -58,7 +58,7 @@ import qualified Common.Direction       as Direction
 import Common.Time  (Time)
 import qualified Common.Score           as Score
 import Common.Color (Color, determine)
-
+import qualified Common.Field           as Field
 --------------------------------------------------------------------------------
 (<$<) :: Functor f => (a -> b) -> (c -> f a) -> (c -> f b)
 f <$< g =  fmap f . g
@@ -125,13 +125,13 @@ get_score       =  IORF.readIORef . P'.takeout_scoreState
 --  フィールドの状態取得
 --------------------------------------------------------------------------------
 -- 指定したエリアのフィールドのオブジェクトの種類を伝える。
-get_fieldStateArea      :: T.AreaPosition -> P'.PlayerState -> IO Area.Area
+get_fieldStateArea      :: Field.Position -> P'.PlayerState -> IO Area.Area
 get_fieldStateArea p    =  readField p <=< P'.takeout_fieldstate
                              
 -- 指定した方向に隣接するエリアのオブジェクトが、空白かどうか判定。
-is_neighborSpace :: T.AreaPosition -> Direction.Area -> P'.PlayerState -> IO Bool
+is_neighborSpace :: Field.Position -> Direction.Area -> P'.PlayerState -> IO Bool
 is_neighborSpace p d =
-    Area.isSpace <$< readField (U.neighbor_area d p) <=< P'.takeout_fieldstate
+    Area.isSpace <$< readField (Field.neighbor d p) <=< P'.takeout_fieldstate
 
 --------------------------------------------------------------------------------
 --  操作ぷよの状態取得
@@ -145,7 +145,7 @@ get_PlayerPuyoColors        :: P'.PlayerState -> IO (Color, Color)
 get_PlayerPuyoColors        =  getPPColor           <$< readTakePP
 
 -- 操作ぷよの基点ぷよのフィールド座標を伝える。
-get_PlayerPuyoPosition      :: P'.PlayerState -> IO T.AreaPosition
+get_PlayerPuyoPosition      :: P'.PlayerState -> IO Field.Position
 get_PlayerPuyoPosition      =  getPPPosition        <$< readTakePP
 
 -- 操作ぷよの動点ぷよの方向を伝える。
@@ -169,7 +169,7 @@ readTakePP :: P'.PlayerState -> IO P'.PlayerPuyo
 readTakePP =  IORF.readIORef <=< P'.takeout_ppuyostate
 
 getPPColor          (P'.PlayerPuyoInfo c _ _ _ _ _)    = c :: (Color, Color)
-getPPPosition       (P'.PlayerPuyoInfo _ p _ _ _ _)    = p :: T.AreaPosition
+getPPPosition       (P'.PlayerPuyoInfo _ p _ _ _ _)    = p :: Field.Position
 getPPDirection      (P'.PlayerPuyoInfo _ _ d _ _ _)    = d :: Direction.Area
 getPPFallTime       (P'.PlayerPuyoInfo _ _ _ f _ _)    = f :: Time
 getPPRotateTime     (P'.PlayerPuyoInfo _ _ _ _ r _)    = r :: Time
@@ -201,34 +201,34 @@ create_playerstate pI gs stateN stateY stateL   =  do
     -- フィールド状態の可変配列を作成する。
     create_fieldstate :: IO P'.FieldState
     create_fieldstate = 
-        AIO.newArray ((1, 1), (V.fieldSizeY' gs, V.fieldSizeX' gs)) Area.initialSnd
+        AIO.newArray ((1, 1), (Field.sizeRank gs, Field.sizeLine gs)) Area.initialSnd
         >>= \stateF -> build_wall stateF    -- 壁オブジェクトを作る。
         >> return stateF
       where
         build_wall          :: P'.FieldState -> IO()
         build_wall stateF   =  do  
-            writeStroke_field stateF walls (fieldArray_indicesY $ V.fieldSizeY' gs)
-            writeStroke_field stateF walls (fieldArray_indicesX $ V.fieldSizeX' gs)
+            writeStroke_field stateF walls (fieldArray_indicesY $ Field.sizeRank gs)
+            writeStroke_field stateF walls (fieldArray_indicesX $ Field.sizeLine gs)
             writeStroke_field stateF walls (fieldArray_indicesX 1)
           where
             walls = repeat Area.initialFst
             -- フィールドの、リストから得た座標を特定のオブジェクトに書き換える。
-            writeStroke_field :: P'.FieldState -> [Area.Area] -> [T.AreaPosition] -> IO()
+            writeStroke_field :: P'.FieldState -> [Area.Area] -> [Field.Position] -> IO()
             writeStroke_field _      _      []      = return ()
             writeStroke_field _      []     _       = return ()
             writeStroke_field stateF (a:as) (p:ps)  =
                 AIO.writeArray stateF p a
                 >> writeStroke_field stateF as ps
             -- フィールド状態配列の、Y座標を指定した要素のリスト。（X座標は操作ぷよの可視範囲）
-            fieldArray_indicesY :: T.PositionY -> [T.AreaPosition]
+            fieldArray_indicesY :: Field.Rank -> [Field.Position]
             fieldArray_indicesY y   
-             | 1 <= y && y <= V.fieldSizeY' gs  = [(y, x) | x <- [2..V.fieldSizeX' gs - 1] ]
-             | otherwise                        = []
+             | 1 <= y && y <= Field.sizeRank gs  = [(y, x) | x <- [2..Field.sizeLine gs - 1] ]
+             | otherwise                         = []
             -- フィールド状態配列の、X座標を指定した要素のリスト。
-            fieldArray_indicesX :: T.PositionX -> [T.AreaPosition]
+            fieldArray_indicesX :: Field.Rank -> [Field.Position]
             fieldArray_indicesX x   
-             | 1 <= x && x <= V.fieldSizeX' gs  = [(y, x) | y <- [1..V.fieldSizeY' gs] ]
-             | otherwise                        = []
+             | 1 <= x && x <= Field.sizeLine gs  = [(y, x) | y <- [1..Field.sizeRank gs] ]
+             | otherwise                         = []
 
 
 -- ネクストぷよを初期化。

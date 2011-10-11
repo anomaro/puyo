@@ -10,13 +10,6 @@ module State.Setting
     GameStateValue,
     initialGameState,
     
-    topFieldRank,
-    hidingFieldRank,
-    fieldSizeY',
-    fieldSizeX',
-    fieldArrayIndices,
-    criticalArea,
-    
     yokokuLv1,
     yokokuLv2,
     yokokuLv3,
@@ -34,7 +27,6 @@ import qualified Common.Function           as U
 import qualified Common.Name                 as W
 import qualified Common.Color           as Color
 
---import qualified Data.Vector            as VC
 import qualified Data.Vector.Unboxed    as VCU
 
 --------------------------------------------------------------------------------
@@ -122,38 +114,14 @@ newGameState f i gs@(GameState gv cp)   = GameState gv' cp
     e'' = f $ get i gs
 
 --------------------------------------------------------------------------------
---  フィールドサイズ
---------------------------------------------------------------------------------
--- ぷよの可視範囲の最上段のフィールドＹ座標。
-topFieldRank    = 4     :: T.PositionY
--- ぷよの可視範囲外の見えない段のフィールドＹ座標。
-hidingFieldRank = 3     :: T.PositionY
-
--- 可視範囲フィールドサイズ ＋下の壁・見えない段以上の３段。
-fieldSizeY' :: GameState -> T.PositionY
-fieldSizeY' =  (+) 4 . get FieldSizeY
-
--- 可視範囲フィールドサイズ ＋左右の壁
-fieldSizeX' :: GameState -> T.PositionY
-fieldSizeX' =  (+) 2 . get FieldSizeX 
-
--- フィールド状態を保持した配列の全要素をリストにする。（ぷよの可視範囲）
-fieldArrayIndices       :: GameState -> [T.AreaPosition]
-fieldArrayIndices gs    = [(y, x) | y <- [topFieldRank..(-1 + fieldSizeY' gs)], 
-                                    x <- [2..(-1 + fieldSizeX' gs)] ]
-
--- 窒息点
-criticalArea    :: GameState -> T.AreaPosition
-criticalArea gs =  (topFieldRank, (fieldSizeX' gs + 1) `quot` 2)
-
---------------------------------------------------------------------------------
 --  予告ぷよ
 --------------------------------------------------------------------------------
 yokokuLv1    = 1
 yokokuLv2 gs    | fieldSizeX > 1    = yokokuLv1 * fieldSizeX
                 | otherwise         = 2
   where fieldSizeX = get FieldSizeX gs
-yokokuLv3 gs    | fieldSizeX > 1    = W.sizeYyokokuLv3 * yokokuLv2 gs
+--yokokuLv3 gs    | fieldSizeX > 1    = Field.sizeYyokokuLv3 * yokokuLv2 gs
+yokokuLv3 gs    | fieldSizeX > 1    = 5 * yokokuLv2 gs
                 | otherwise         = 3
   where fieldSizeX = get FieldSizeX gs
 yokokuLv4 gs    | fieldSizeX > 1    = fieldSizeX * yokokuLv3 gs

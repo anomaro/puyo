@@ -16,6 +16,7 @@ import qualified Common.Direction       as Direction
 import Common.Time  (Time)
 import Common.Score (Score)
 import Common.Color (Color)
+import qualified Common.Field           as Field
 --------------------------------------------------------------------------------
 --  プレイヤー状態
 --------------------------------------------------------------------------------
@@ -31,12 +32,12 @@ data PlayerState = PlayerState  Identity.PlayerIdentity
                                 LoseFlagState       -- 敗北フラグ（共有）
 
 type GamePhaseState  = IORF.IORef T.GamePhase 
-type FieldState      = AIO.IOArray T.AreaPosition Area.Area 
+type FieldState      = AIO.IOArray Field.Position Area.Area 
 type PlayerPuyoState = IORF.IORef PlayerPuyo  
 data PlayerPuyo
     = NonExistent
     | PlayerPuyoInfo    (Color, Color)      -- （基点ぷよの色、動点ぷよの色）
-                        T.AreaPosition      -- 基点ぷよのフィールド座標
+                        Field.Position      -- 基点ぷよのフィールド座標
                         Direction.Area      -- 動点ぷよの方向
                         Time                -- 自然落下用のカウンタ
                         Time                -- 回転用のカウンタ

@@ -2,21 +2,8 @@
 module Common.Function
     where
 
-import Control.Applicative
 import qualified System.Random          as RAN
 import qualified Control.Monad.State    as CMS
-
-import qualified Common.DataType       as T
-import qualified Common.Direction       as Direction
-
---------------------------------------------------------------------------------
--- 指定した方向に隣接するフィールド座標を得る。（境界チェックをしない）
--- ゲーム環境を知らない関数が、フィールド可視範囲内でこの関数を使用場合に使う。
-neighbor_area           :: Direction.Area -> T.AreaPosition -> T.AreaPosition
-neighbor_area Direction.Up    (y, x)   = (y - 1, x    )
-neighbor_area Direction.Right (y, x)   = (y    , x + 1)
-neighbor_area Direction.Down  (y, x)   = (y + 1, x    )
-neighbor_area Direction.Left  (y, x)   = (y    , x - 1)
 
 --------------------------------------------------------------------------------
 --  乱数

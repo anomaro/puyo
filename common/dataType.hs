@@ -15,11 +15,6 @@ data GameName   = PuyoPuyo  -- 通常のぷよぷよ
 --------------------------------------------------------------------------------
 --  ゲーム
 -------------------------------------------------------------------------------- 
--- フィールド座標。( Ｙ座標, Ｘ座標 )
-type AreaPosition   = (PositionY, PositionX)
-type PositionY  = Int
-type PositionX  = Int 
-
 -- 数
 type NumOfPuyos     = Int   -- 組みぷよの数
 type NumOfPuyo      = Int   -- ぷよの数

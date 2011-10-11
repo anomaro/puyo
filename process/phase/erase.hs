@@ -13,6 +13,7 @@ import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
 import qualified Common.Score           as Score
 import Common.Color (Color)
+import qualified Common.Field           as Field
 
 import qualified Common.DataType   as T
 import qualified Common.Function    as U
@@ -31,9 +32,9 @@ import Standardizable
 erase_puyo          :: V.GameState -> PlayerState -> IO Bool
 erase_puyo gs state =  do
     renewScore Score.expandChain state
-    MND.foldM f False $ V.fieldArrayIndices gs
+    MND.foldM f False $ Field.arrayIndices gs
   where
-    f :: Bool -> T.AreaPosition -> IO Bool
+    f :: Bool -> Field.Position -> IO Bool
     f b p = do
         area  <- get_fieldStateArea p state 
         numUnion    <- if Area.isUnionCheck Nothing area p
@@ -52,11 +53,11 @@ erase_puyo gs state =  do
 -- 結合状態を調べてぷよを消滅させる。（消滅フラグが立っているエリアを空白にする）
 rewriteSpase_puyo           :: V.GameState -> PlayerState -> IO ()
 rewriteSpase_puyo gs state  =  do
-    MND.mapM_ f $ V.fieldArrayIndices gs
+    MND.mapM_ f $ Field.arrayIndices gs
     renewScore Score.calculate state
     calculateYokoku
   where
-    f :: T.AreaPosition -> IO()
+    f :: Field.Position -> IO()
     f p = do
         area    <- get_fieldStateArea p state
         MND.when (Area.isReplacedSpace area p)
@@ -72,14 +73,14 @@ rewriteSpase_puyo gs state  =  do
 
 --------------------------------------------------------------------------------
 -- 結合チェック状態を未調査状態にする。
-off_unionCheck :: PlayerState -> T.AreaPosition -> IO()
+off_unionCheck :: PlayerState -> Field.Position -> IO()
 off_unionCheck state p = do
     area <- get_fieldStateArea p state
     MND.when (Area.isUnionCheckFinished Nothing area p)
         $ renew_fieldArea state p $ Area.modifyUnion (const standard) area
 
 -- 結合しているぷよを消滅させる。（消滅フラグを立てる。）
-erase_unionPuyo :: PlayerState -> T.AreaPosition -> IO()
+erase_unionPuyo :: PlayerState -> Field.Position -> IO()
 erase_unionPuyo state p = do
     area <- get_fieldStateArea p state
     renew_fieldArea state p $ Area.eracingPuyo (Just $ Area.color area)
@@ -92,13 +93,13 @@ erase_unionPuyo state p = do
         MND.when (Area.isUnionCheckFinished (Just color) area p') 
                                                 $ erase_unionPuyo state p'
       where
-        p'  = U.neighbor_area d p
+        p'  = Field.neighbor d p
         -- おじゃまぷよを消滅させる。（消滅フラグを立てる。）
-        eraseOjamaPuyo      :: PlayerState -> T.AreaPosition -> IO()
+        eraseOjamaPuyo      :: PlayerState -> Field.Position -> IO()
         eraseOjamaPuyo s p  =  renew_fieldArea s p $ Area.eracingPuyo Nothing
 
 -- エリア対象の結合チェック。このエリアがチェック対象かどうかは事前に調べてある。
-check_union :: PlayerState -> T.AreaPosition -> IO T.NumOfUnion
+check_union :: PlayerState -> Field.Position -> IO T.NumOfUnion
 check_union state p    = do
     area <- get_fieldStateArea p state
     renew_fieldArea state p $ Area.unionCheckCompletion area
@@ -111,4 +112,4 @@ check_union state p    = do
           then check_union state p' >>= return . (+ n)
           else return n
       where
-        p'  = U.neighbor_area d p
+        p'  = Field.neighbor d p

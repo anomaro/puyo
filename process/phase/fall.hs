@@ -11,6 +11,7 @@ import Control.Monad
 import qualified Common.PlayerIdentity  as Identity (against, territory)
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
+import qualified Common.Field           as Field
 
 import qualified Common.DataType  as T
 import qualified Common.Function    as U
@@ -64,7 +65,7 @@ putOjamaPuyo gs state =  do
     fieldSizeX  = V.get V.FieldSizeX gs
     sieve n | n > fieldSizeX    = fieldSizeX
             | otherwise         = n
-    targetAreaPosition ns = [(V.hidingFieldRank, x)| x <- ns]
+    targetAreaPosition ns = [(Field.hidingBottomRank, x)| x <- ns]
     -- おじゃまぷよのセッティング
     put p   = do
         area <- get_fieldStateArea p state
