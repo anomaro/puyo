@@ -11,6 +11,8 @@ module Common.Score
 ) where
 
 import Data.List (nub)
+import Control.Monad.Instances
+
 import qualified Common.DataType   as T
 import Common.Color (Color)
 
@@ -19,11 +21,11 @@ import Common.Color (Color)
 --------------------------------------------------------------------------------
 data Score          = Score ActualScore Calculation
 
-data ActualScore    = ActualScore
-                        { static   :: BaseType  -- おじゃまぷよに換算されたスコア
-                        , dynamic  :: BaseType  -- おじゃまぷよに換算されていないスコア
-                        }
-type BaseType       = Int   -- スコアの数値の型。 ※2147483647
+type ActualScore    = ( BaseType    -- おじゃまぷよに換算されたスコア
+                      , BaseType )  -- おじゃまぷよに換算されていないスコア
+                      
+type BaseType       = Int
+
 type Calculation    = ( T.NumOfChain        -- 連鎖数
                       , [T.NumOfUnion]      -- 連結数
                       , [Color]             -- 消したの色
@@ -34,8 +36,8 @@ type Calculation    = ( T.NumOfChain        -- 連鎖数
 --------------------------------------------------------------------------------
 initial        = Score defaultActualScore defaultCalculation   :: Score
 
-defaultActualScore  = ActualScore 0 0   :: ActualScore
-defaultCalculation  = (0, [], [])       :: Calculation
+defaultActualScore  = (0, 0)        :: ActualScore
+defaultCalculation  = (0, [], [])   :: Calculation
 
 --------------------------------------------------------------------------------
 --  関数
@@ -54,13 +56,13 @@ expandUniCol u c (Score sc (cha, uns, cls)) = (Score sc (cha, u:uns, c:cls))
 
 -- 落下による得点
 fallBounus                  :: Score -> Score
-fallBounus  (Score act cal) =  Score (act .+ 1) cal
+fallBounus  (Score act cal) =  Score (fmap (+1) act) cal
 
 -- 消したぷよから得点を計算
 calculate :: Score -> Score
 calculate (Score score (cha, uns, cls)) = Score newScore (cha, [], [])
   where
-    newScore    = score .+ 10 * basicBounus * sum uns
+    newScore    = fmap (+ 10 * basicBounus * sum uns) score
     basicBounus = calculateBasicBounus $ chab + clsb + lnkb
     chab        = calculateBounusChain cha
     clsb        = calculateBounusColor . length . nub $ cls
@@ -86,16 +88,10 @@ calculateBounusColor                :: T.NumOfColors -> BaseType
 calculateBounusColor                =  (*) 3 . truncate . (^^) 2 .(+) (-2)
 
 -- 予告ぷよを算出する。
-calculateYokoku :: Score -> Int -> (Int, Score)
-calculateYokoku (Score (ActualScore ss ds) cal) rate =
-    (n, (Score (ActualScore (ds - m + ss) m) cal))
+calculateYokoku :: Score -> Int -> (T.NumOfPuyo, Score)
+calculateYokoku (Score (ss, ds) cal) rate = (n, (Score ((ds - m + ss), m) cal))
   where(n, m)  = ds `quotRem` rate
 
 -- 表示する得点
-display                                 :: Score -> BaseType
-display (Score (ActualScore ss ds) _)   =  ss + ds
-
--- おじゃまぷよに換算されていないスコアに足す。
-(.+) :: ActualScore -> BaseType -> ActualScore
-(ActualScore ss sd) .+ n    = ActualScore ss $ sd + n
-infixl 5 .+
+display                     :: Score -> BaseType
+display (Score (ss, ds) _)  =  ss + ds
