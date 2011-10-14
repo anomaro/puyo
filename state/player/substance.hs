@@ -7,9 +7,6 @@ import Control.Applicative
 import qualified Data.IORef         as IORF
 import qualified Data.Array.IO      as AIO
 
-import qualified Common.DataType   as T
-import qualified Common.Function    as U
-
 import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
@@ -17,6 +14,9 @@ import Common.Time  (Time)
 import Common.Score (Score)
 import Common.Color (Color)
 import qualified Common.Field           as Field
+import qualified Common.Yokoku          as Yokoku
+import qualified Common.Phase           as Phase (Game)
+
 --------------------------------------------------------------------------------
 --  プレイヤー状態
 --------------------------------------------------------------------------------
@@ -31,9 +31,9 @@ data PlayerState = PlayerState  Identity.PlayerIdentity
                                 YokokuState         -- 予告ぷよ（共有）
                                 LoseFlagState       -- 敗北フラグ（共有）
 
-type GamePhaseState  = IORF.IORef T.GamePhase 
-type FieldState      = AIO.IOArray Field.Position Area.Area 
-type PlayerPuyoState = IORF.IORef PlayerPuyo  
+type GamePhaseState  = IORF.IORef Phase.Game
+type FieldState      = AIO.IOArray Field.Position Area.Area
+type PlayerPuyoState = IORF.IORef PlayerPuyo
 data PlayerPuyo
     = NonExistent
     | PlayerPuyoInfo    (Color, Color)      -- （基点ぷよの色、動点ぷよの色）
@@ -49,29 +49,7 @@ type NextPuyoState   = IORF.IORef [Color]
 type ScoreState      = IORF.IORef Score 
 
 type YokokuState    = IORF.IORef YokokuField
-type YokokuField    = (Yokoku, Yokoku)
-type Yokoku     = ( YokokuAdvance T.NumOfPuyo,
-                    YokokuSupply  T.NumOfPuyo, 
-                    YokokuReserve T.NumOfPuyo )
-newtype YokokuAdvance a = Advance a
-newtype YokokuSupply  a = Supply  a
-newtype YokokuReserve a = Reserve a
--- 予約ぷよを発生させる、ぷよ消去（連鎖）中に一旦Reserveに置かれ、
--- そのぷよ消去が完了したら、ReserveからSupplyに移し、
--- おじゃまぷよが降る側のプレイヤーが着地完了したら、Advanceに置かれる。
--- Advanceに置かれた量のおじゃまぷよが最終的に降ってくる。
-
-instance Functor YokokuAdvance  where
-    fmap f (Advance n)  = Advance (f n)
-instance Functor YokokuSupply   where
-    fmap f (Supply  n)  = Supply  (f n)
-instance Functor YokokuReserve  where
-    fmap f (Reserve n)  = Reserve (f n)
-
-defaultYokokuField  :: YokokuField
-defaultYokokuField  =  ((Advance 0, Supply 0, Reserve 0),
-                        (Advance 0, Supply 0, Reserve 0))
-
+type YokokuField    = (Yokoku.Shelf, Yokoku.Shelf)
 
 type LoseFlagState  = IORF.IORef LoseFlag
 type LoseFlag       = (Bool, Bool)

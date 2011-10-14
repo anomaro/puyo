@@ -1,6 +1,7 @@
--- utility.hs
-module Common.Function
-    where
+module Common.Random
+( run
+, list
+) where
 
 import qualified System.Random          as RAN
 import qualified Control.Monad.State    as CMS
@@ -8,21 +9,22 @@ import qualified Control.Monad.State    as CMS
 --------------------------------------------------------------------------------
 --  —”
 --------------------------------------------------------------------------------
--- 0`n‚Ü‚Å‚Ì”ÍˆÍ‚Ì—”‚ð“¾‚éB
 type RandomState a = CMS.State RAN.StdGen a -- StdGen -> (a, StdGen)
-getRandom   :: Int -> RandomState Int
-getRandom n = do
+
+-- 0`n‚Ü‚Å‚Ì”ÍˆÍ‚Ì—”‚ð“¾‚éB
+get     :: Int -> RandomState Int
+get n   =  do
     gen <- CMS.get
     let (val, gen') = RAN.randomR (0,n) gen
     CMS.put gen'
     return val
 
-runRandom   :: Int -> IO Int
-runRandom n =  do
+run     :: Int -> IO Int
+run n   =  do
     oldState <- RAN.getStdGen
-    let (result, newState) = CMS.runState (getRandom n) oldState
+    let (result, newState) = CMS.runState (get n) oldState
     RAN.setStdGen newState
     return result
 
-makeRandoms :: Int -> Int ->  [Int]
-makeRandoms =  \n  -> RAN.randomRs (0,n) . RAN.mkStdGen
+list    :: Int -> Int ->  [Int]
+list n  =  RAN.randomRs (0, n) . RAN.mkStdGen

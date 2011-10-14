@@ -20,8 +20,6 @@ module State.Player.Overwriting
 
     -- 予告ぷよ更新
     renewYokoku,
-    toSupplyYokoku,
-    toAdvanceYokoku,
     
     -- 敗北フラグ更新
     renewLoseFlag,
@@ -37,10 +35,7 @@ import Control.Monad
 import qualified Data.IORef         as IORF
 import qualified Data.Array.IO      as AIO
 
-import qualified Common.DataType   as T
-import qualified Common.Function    as U
 import qualified State.Setting  as V
-
 import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
@@ -48,17 +43,20 @@ import Common.Time  (Time)
 import qualified Common.Score           as Score
 import Common.Color (Color)
 import qualified Common.Field           as Field (Position)
+import qualified Common.Yokoku          as Yokoku
+import qualified Common.Number          as Number
+import qualified Common.Phase           as Phase (Game)
 
 --------------------------------------------------------------------------------
 --  状態書き換え
 --------------------------------------------------------------------------------
 -- ゲーム状態を変える。
-shift_gamePhase                 :: PlayerState -> T.GamePhase -> IO()
+shift_gamePhase                 :: PlayerState -> Phase.Game -> IO()
 shift_gamePhase state gamephase =
     flip IORF.writeIORef gamephase =<< takeout_gamePhaseState state
 
 -- ネクストぷよを消費する。
-eat_nextPuyo    :: PlayerState -> T.NumOfPuyo -> IO()
+eat_nextPuyo    :: PlayerState -> Number.Puyo -> IO()
 eat_nextPuyo state n =
     flip IORF.modifyIORef (drop n) =<< takeout_nextPuyoState state
     
@@ -77,35 +75,11 @@ renewLoseFlag b trt state   =  do
 --  予告ぷよ更新
 --------------------------------------------------------------------------------
 -- 予告ぷよを更新する。
-renewYokoku :: (T.NumOfPuyo -> T.NumOfPuyo)
-            -> (T.NumOfPuyo -> T.NumOfPuyo)
-            -> (T.NumOfPuyo -> T.NumOfPuyo)
+renewYokoku :: (Yokoku.Shelf -> Yokoku.Shelf)
             -> Identity.Territory -> PlayerState -> IO()
-renewYokoku f1 f2 f3 trt state   = do
-    yokokuField <- IORF.readIORef $ takeout_yokokuState state
-    IORF.writeIORef (takeout_yokokuState state) $ Identity.apply trt f yokokuField
-  where
-    f (n1, n2, n3) = (fmap f1 n1, fmap f2 n2, fmap f3 n3)
-
--- 予告ぷよをReserveからSupplyへ移す。
-toSupplyYokoku :: Identity.Territory -> PlayerState -> IO()
-toSupplyYokoku trt state =  do
-    yokokuField <- IORF.readIORef stateY
-    IORF.writeIORef stateY $ Identity.apply trt shift yokokuField
-  where
-    stateY  = takeout_yokokuState state
-    shift (n, Supply n2, Reserve n3)    = (n, Supply $ n2 + n3, Reserve 0)
-
--- 予告ぷよをSupplyからAdvanceへ移す。
-toAdvanceYokoku :: T.NumOfPuyo -> Identity.Territory -> PlayerState -> IO()
-toAdvanceYokoku m trt state =  do
-    yokokuField <- IORF.readIORef stateY
-    IORF.writeIORef stateY $ Identity.apply trt shift yokokuField
-  where
-    stateY  = takeout_yokokuState state
-    shift (Advance n1, Supply n2, n)
-        | n2 > m    = (Advance $ n1 + m , Supply $ n2 - m, n)
-        | otherwise = (Advance $ n1 + n2, Supply 0       , n)
+renewYokoku f trt state   = do
+    yokoku <- IORF.readIORef $ takeout_yokokuState state
+    IORF.writeIORef (takeout_yokokuState state) $ Identity.apply trt f yokoku
 
 --------------------------------------------------------------------------------
 --  得点更新

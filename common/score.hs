@@ -13,7 +13,7 @@ module Common.Score
 import Data.List (nub)
 import Control.Monad.Instances
 
-import qualified Common.DataType   as T
+import qualified Common.Number          as Number
 import Common.Color (Color)
 
 --------------------------------------------------------------------------------
@@ -26,8 +26,8 @@ type ActualScore    = ( BaseType    -- おじゃまぷよに換算されたスコア
                       
 type BaseType       = Int
 
-type Calculation    = ( T.NumOfChain        -- 連鎖数
-                      , [T.NumOfUnion]      -- 連結数
+type Calculation    = ( Number.Chain        -- 連鎖数
+                      , [Number.Union]      -- 連結数
                       , [Color]             -- 消したの色
                       )
 
@@ -51,7 +51,7 @@ expandChain                                 :: Score -> Score
 expandChain (Score sc (cha, _, _))          =  Score sc (cha + 1, [], [])
 
 -- 連結数・色の数を集計
-expandUniCol :: T.NumOfUnion -> Color -> Score -> Score
+expandUniCol :: Number.Union -> Color -> Score -> Score
 expandUniCol u c (Score sc (cha, uns, cls)) = (Score sc (cha, u:uns, c:cls))
 
 -- 落下による得点
@@ -74,21 +74,21 @@ calculateBasicBounus n  | n <= 0    =  1
                         | n >  1000 =  999
                         | otherwise =  n
 -- 連鎖ボーナスを算出する。
-calculateBounusChain                :: T.NumOfChain -> BaseType
+calculateBounusChain                :: Number.Chain -> BaseType
 calculateBounusChain n  | n < 4     =  8 * truncate ((^^) 2 $ n - 2)
                         | otherwise =  (n - 3) * 32
                         
 -- 連結ボーナスを算出する。
-calculateBounusLink                 :: T.NumOfUnion -> BaseType
+calculateBounusLink                 :: Number.Union -> BaseType
 calculateBounusLink n   | n <= 4    =  0
                         | n >= 11   =  10
                         | otherwise =  n - 3
 -- 複色ボーナスを算出する。
-calculateBounusColor                :: T.NumOfColors -> BaseType
+calculateBounusColor                :: Number.Colors -> BaseType
 calculateBounusColor                =  (*) 3 . truncate . (^^) 2 .(+) (-2)
 
 -- 予告ぷよを算出する。
-calculateYokoku :: Score -> Int -> (T.NumOfPuyo, Score)
+calculateYokoku :: Score -> Int -> (Number.Puyo, Score)
 calculateYokoku (Score (ss, ds) cal) rate = (n, (Score ((ds - m + ss), m) cal))
   where(n, m)  = ds `quotRem` rate
 

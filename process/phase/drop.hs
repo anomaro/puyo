@@ -11,10 +11,7 @@ import qualified Control.Monad      as MND
 
 import Standardizable
 
-import qualified Common.DataType    as T
-import qualified Common.Function    as U
 import qualified State.Setting      as V 
-import qualified Common.Name        as W
 
 import State.Player.DataType
 import State.Player.Query   (

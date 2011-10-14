@@ -1,15 +1,12 @@
--- stage.hs
 module Stage
-    where
+where
 
---import qualified Typedata       as T
 import qualified State.Player.DataType  as P
 import qualified State.Player.Query     as Q 
 import qualified State.Configuration  as CT
 import qualified State.Result     as D
 
 import qualified State.Setting   as V
-import qualified Common.Name     as W
 
 import qualified Common.PlayerIdentity  as Identity
 

@@ -11,18 +11,15 @@ import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Direction       as Direction
 import qualified Common.Time            as Time
 import qualified Common.Score           as Score
-
-import qualified Common.DataType   as T
-import qualified State.Setting   as V (GameState)
-
-import qualified Input          as I
+import qualified Common.Phase           as Phase
+import qualified State.Setting          as V (GameState)
+import qualified Input                  as I
 import qualified Process.Phase.Build    as B
 import qualified Process.Phase.Control  as C
 import qualified Process.Phase.Drop     as D
 import qualified Process.Phase.Erase    as E
 import qualified Process.Phase.Fall     as F
 import qualified Process.Phase.Gameover as G
-
 import State.Player.DataType
 import State.Player.Query   (
     get_playerIdentity,
@@ -49,20 +46,20 @@ convert_gamePhase state stateB gs =
     >>= \gamePhase  -> (convert_gamePhase' gamePhase) state
     >>  return (gameContinue gamePhase)
   where
-    convert_gamePhase' :: T.GamePhase -> PlayerState -> IO ()
-    convert_gamePhase' T.BuildPhase             = build_playerPuyo  gs
-    convert_gamePhase' T.ControlPhase           = control_playerPuyo stateB gs
-    convert_gamePhase' T.DropPhase              = drop_fieldPuyo    gs
-    convert_gamePhase' T.ErasePhase             = erase_fieldPuyo   gs
-    convert_gamePhase' T.ErasePhase'            = erase_fieldPuyo'  gs
-    convert_gamePhase' T.FallPhase              = fall_ojamaPuyo    gs
-    convert_gamePhase' T.FallPhase'             = fall_ojamaPuyo'   gs
-    convert_gamePhase' T.GameOverPhase          = gameover          gs
-    convert_gamePhase' (T.AnimationPhase t g)   = animation t g
+    convert_gamePhase' :: Phase.Game -> PlayerState -> IO ()
+    convert_gamePhase' Phase.Build              = build_playerPuyo  gs
+    convert_gamePhase' Phase.Control            = control_playerPuyo stateB gs
+    convert_gamePhase' Phase.Drop               = drop_fieldPuyo    gs
+    convert_gamePhase' Phase.Erase              = erase_fieldPuyo   gs
+    convert_gamePhase' Phase.Erase'             = erase_fieldPuyo'  gs
+    convert_gamePhase' Phase.Fall               = fall_ojamaPuyo    gs
+    convert_gamePhase' Phase.Fall'              = fall_ojamaPuyo'   gs
+    convert_gamePhase' Phase.GameOver           = gameover          gs
+    convert_gamePhase' (Phase.Animation t g)    = animation t g
     
-    gameContinue    :: T.GamePhase -> Bool
-    gameContinue T.GameOverPhase    = False
-    gameContinue _                  = True
+    gameContinue                    :: Phase.Game -> Bool
+    gameContinue Phase.GameOver     =  False
+    gameContinue _                  =  True
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -76,10 +73,10 @@ check_gameEnd state =  do
 --------------------------------------------------------------------------------
 --  AnimationPhase Time GamePhase   アニメーション硬直
 --------------------------------------------------------------------------------
-animation        :: Time.Time -> T.GamePhase -> PlayerState -> IO()
+animation        :: Time.Time -> Phase.Game -> PlayerState -> IO()
 animation time nextPhase state
  | time > 0  = shift_gamePhase state 
-                $ T.AnimationPhase (Time.count time) nextPhase
+                $ Phase.Animation (Time.count time) nextPhase
  | otherwise = shift_gamePhase state nextPhase
 
 --------------------------------------------------------------------------------
@@ -89,8 +86,8 @@ build_playerPuyo            :: V.GameState -> PlayerState -> IO()
 build_playerPuyo gs state   =  do
     loseFlag    <- B.checkLose gs state
     if loseFlag
-      then shift_gamePhase state T.GameOverPhase
-      else B.build_playerPuyo gs state >> shift_gamePhase state T.ControlPhase
+      then shift_gamePhase state Phase.GameOver
+      else B.build_playerPuyo gs state >> shift_gamePhase state Phase.Control
     
 --------------------------------------------------------------------------------
 --  ContralPhase    操作ぷよの更新
@@ -99,7 +96,7 @@ control_playerPuyo :: I.ButtonState -> V.GameState -> PlayerState -> IO()
 control_playerPuyo stateB gs state = do
     flagGameEnd <- check_gameEnd state
     if flagGameEnd
-      then shift_gamePhase state T.GameOverPhase
+      then shift_gamePhase state Phase.GameOver
       else do
         listB <- I.read_buttonState stateB
         case Identity.player $ get_playerIdentity state
@@ -113,7 +110,7 @@ control_playerPuyo' listB gs state  = do
     flag_playermove     <- move_playerPuyo gs state listB
     when flag_playermove
      ( get_gamePhase state >>=
-       shift_gamePhase state . T.AnimationPhase Time.animeMove )
+       shift_gamePhase state . Phase.Animation Time.animeMove )
      
 -- ボタン状態を調べてぷよを移動する。
 move_playerPuyo :: V.GameState -> PlayerState -> [I.Button] -> IO Bool
@@ -151,14 +148,14 @@ drop_fieldPuyo gs state =  do
     if flagExistent
       then do
         D.land_puyo state
-        shift_gamePhase state T.DropPhase
+        shift_gamePhase state Phase.Drop
       else do
         flagDrop <- D.drop_puyo gs state
         if flagDrop
           then shift_gamePhase state 
-                    (T.AnimationPhase Time.animeDrop T.DropPhase)
+                    (Phase.Animation Time.animeDrop Phase.Drop)
           else shift_gamePhase state 
-                    (T.AnimationPhase Time.animeLand T.ErasePhase)
+                    (Phase.Animation Time.animeLand Phase.Erase)
                     
 --------------------------------------------------------------------------------
 --  ErasePhase      ぷよの消滅
@@ -168,12 +165,12 @@ erase_fieldPuyo gs state    =  do
     flagErase   <- E.erase_puyo gs state
     if flagErase
       then shift_gamePhase state 
-                    $ T.AnimationPhase Time.animeErase T.ErasePhase'
-      else shift_gamePhase state T.FallPhase
+                    $ Phase.Animation Time.animeErase Phase.Erase'
+      else shift_gamePhase state Phase.Fall
 
 erase_fieldPuyo'            :: V.GameState -> PlayerState -> IO()
 erase_fieldPuyo' gs state   =  E.rewriteSpase_puyo gs state
-                               >> shift_gamePhase state T.DropPhase
+                               >> shift_gamePhase state Phase.Drop
 
 --------------------------------------------------------------------------------
 --  FallPhase       おじゃまぷよの落下
@@ -183,8 +180,8 @@ fall_ojamaPuyo gs state =  do
     F.moveYokokuPuyo gs state
     ojama   <- get_yokoku trt state
     if ojama > 0
-      then shift_gamePhase state T.FallPhase'
-      else shift_gamePhase state T.BuildPhase
+      then shift_gamePhase state Phase.Fall'
+      else shift_gamePhase state Phase.Build
   where
     trt = Identity.territory $ get_playerIdentity state
     
@@ -201,8 +198,8 @@ fall_ojamaPuyo' gs state =  do
           then shift_gamePhase state loopPhase
           else shift_gamePhase state nextPhase
   where
-    loopPhase   = T.AnimationPhase Time.animeDrop T.FallPhase'
-    nextPhase   = T.AnimationPhase Time.animeLand T.BuildPhase
+    loopPhase   = Phase.Animation Time.animeDrop Phase.Fall'
+    nextPhase   = Phase.Animation Time.animeLand Phase.Build
     
 --------------------------------------------------------------------------------
 --  GameoverPhase   ゲームオーバー時処理

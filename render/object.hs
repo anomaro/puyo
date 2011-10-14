@@ -1,4 +1,3 @@
--- renderObject.hs
 module Render.Object
 ( GameObject
 , unitAreaY'
@@ -23,10 +22,9 @@ module Render.Object
 
 import qualified Graphics.UI.GLUT   as GLUT
 
-import qualified Common.DataType    as T
-import qualified Common.Name        as W (window_sizeY, window_sizeX)
 import qualified Common.Direction   as Direction
 import qualified Common.Color       as Color (Color, inGLUT)
+import qualified Render.Common      as W (window_sizeY, window_sizeX)
 
 --------------------------------------------------------------------------------
 --  Œ^

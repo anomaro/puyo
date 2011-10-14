@@ -17,15 +17,9 @@ import State.Player.Overwriting (
     eat_nextPuyo,
     renew_playerPuyo',
     renewScore,
-    toSupplyYokoku,
-    toAdvanceYokoku,
     renewLoseFlag,
     )
-
-import qualified Common.DataType   as T
-import qualified Common.Function   as U
-import qualified State.Setting  as V 
-
+import qualified State.Setting          as V
 import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area  (isPuyo)
 import qualified Common.Direction       as Direction

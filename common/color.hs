@@ -12,7 +12,7 @@ import Data.List
 import qualified Data.Vector            as Vector
 import qualified Graphics.UI.GLUT       as GLUT (Color3 (Color3))
 
-import qualified Common.DataType              as T
+import qualified Common.Number          as Number
 --------------------------------------------------------------------------------
 --  å^
 --------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ type ColorAssortment    = Vector.Vector Color
 --  ñºëO
 --------------------------------------------------------------------------------
 colors      = [minBound .. maxBound]            :: [Color]
-maxNumber   = fromEnum (maxBound :: Color) + 1  :: T.NumOfColors
+maxNumber   = fromEnum (maxBound :: Color) + 1  :: Number.Colors
 
 --------------------------------------------------------------------------------
 --  ä÷êî

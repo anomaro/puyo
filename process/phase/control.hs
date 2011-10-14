@@ -1,19 +1,12 @@
 -- controlPhase.hs
 module Process.Phase.Control
-    (
-    fallNatural_playerPuyo,
-    fall_puyo,
-    move_puyo,
-    rotate_puyo,
-    )
-    where
+( fallNatural_playerPuyo
+, fall_puyo
+, move_puyo
+, rotate_puyo
+) where
 
 import qualified Control.Monad      as MND
-
-import qualified Common.DataType  as T
-import qualified Common.Function   as U
-import qualified State.Setting as V (GameState, get, GameStateIndex(FallTime))
-import qualified Common.Name    as W (flag_quickTrun)
 
 import State.Player.DataType
 import State.Player.Query   (
@@ -30,9 +23,11 @@ import State.Player.Overwriting (
     renew_playerPuyo,
     shift_gamePhase,
     )
+import qualified State.Setting          as V
 import qualified Common.Direction       as Direction
 import qualified Common.Time            as Time (Time, animeRotate, count)
 import qualified Common.Field           as Field (neighbor)
+import qualified Common.Phase           as Phase (Game(Drop))
 
 --------------------------------------------------------------------------------
 -- 自然落下処理。（移動した場合はTrueを返す。）
@@ -88,7 +83,7 @@ move_puyo state dm  =  do
         if move         -- 移動判定 --
           then move_neighbor pos
           else MND.when (dm == Direction.Down)   -- 着地判定 --
-                    $ (shift_gamePhase state T.DropPhase) >> land_puyo
+                    $ (shift_gamePhase state Phase.Drop) >> land_puyo
         return move
       where
         move_neighbor p = renew_playerPuyo state Nothing
@@ -149,7 +144,7 @@ rotate_puyo state rd    = do
                                Nothing
                                Nothing
                                Nothing
-                               (Just W.flag_quickTrun)
+                               (Just V.flag_quickTrun)
 
 --------------------------------------------------------------------------------
 -- 移動できるかどうか判定。（隣接するマスが空白かどうか調べる。）

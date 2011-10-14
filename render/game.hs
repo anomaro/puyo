@@ -36,9 +36,9 @@ import qualified Common.Time            as Time (Time, animeRotate)
 import qualified Common.Score           as Score
 import Common.Color (Color)
 import qualified Common.Field           as Field
+import qualified Common.Number          as Number
 
-import qualified Common.DataType   as T
-import qualified Common.Function    as U
+--import qualified Common.DataType   as T
 import qualified State.Setting  as V
 
 import Render.Object
@@ -123,10 +123,10 @@ render_yokoku gs state  =  do
     f p o   = render_fieldObject' gs trt p 0 0 1 1 0 o
 
 -- —\‚Õ‚æ‚Ì•\Ž¦‚·‚éŽí—Þ‚ðŒˆ‚ß‚éB
-yokokuKinds'    :: T.NumOfPuyo -> V.GameState -> [GameObject]
+yokokuKinds'    :: Number.Puyo -> V.GameState -> [GameObject]
 yokokuKinds' n gs   = yokokuKinds n 0 gs []
   where
-    yokokuKinds :: T.NumOfPuyo -> Field.Line -> V.GameState -> [GameObject]
+    yokokuKinds :: Number.Puyo -> Field.Line -> V.GameState -> [GameObject]
                 -> [GameObject]
     yokokuKinds 0 x gs objs = objs
     yokokuKinds n x gs objs
@@ -199,7 +199,7 @@ render_nextPuyo gs state    =  do
     colors <- get_nextPuyoColors state
     render_nextPuyo' colors $ V.get V.NextPuyoView gs
   where
-    render_nextPuyo' :: [Color] -> T.NumOfPuyos -> IO()
+    render_nextPuyo' :: [Color] -> Number.PuyoPair -> IO()
     render_nextPuyo' _          0   = return ()
     render_nextPuyo' (cb:cm:cs) n   = do
         let trt = Identity.territory $ get_playerIdentity state

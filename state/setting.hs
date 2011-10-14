@@ -1,31 +1,30 @@
--- variable.hs
 module State.Setting
-    (
-    GameState,
-    get,
-    get_ColorPattern,
-    newGameState,
+( GameState
+, get
+, get_ColorPattern
+, newGameState
 
-    GameStateIndex (..),
-    GameStateValue,
-    initialGameState,
-    
-    yokokuLv1,
-    yokokuLv2,
-    yokokuLv3,
-    yokokuLv4,
-    yokokuLv5,
-    yokokuLv6,
-    )
-    where
+, GameStateIndex (..)
+, GameStateValue
+, initialGameState
+
+, yokokuLv1
+, yokokuLv2
+, yokokuLv3
+, yokokuLv4
+, yokokuLv5
+, yokokuLv6
+
+, flag_quickTrun
+, flag_oturi
+) where
 
 -- ゲーム環境の設定等を決める値
 -- 色数・ぷよの消える数・おじゃまぷよレートなどなど。。。
 
-import qualified Common.DataType              as T
-import qualified Common.Function           as U
-import qualified Common.Name                 as W
+import qualified Common.Number          as Number
 import qualified Common.Color           as Color
+import qualified Common.Random          as Random (run)
 
 import qualified Data.Vector.Unboxed    as VCU
 
@@ -138,7 +137,13 @@ yokokuLv6 gs    | fieldSizeX > 1    = 2 * yokokuLv5 gs
 --  色パターン
 --------------------------------------------------------------------------------
 -- ランダムな色パターンを作る。
-randomColorPattern  :: T.NumOfColors -> ColorPattern
+randomColorPattern  :: Number.Colors -> ColorPattern
 randomColorPattern  =  \noc          -> do
-    val     <- U.runRandom $ Color.totalAssortments noc - 1
+    val     <- Random.run $ Color.totalAssortments noc - 1
     return $ Color.assortments !! val
+
+--------------------------------------------------------------------------------
+--  ゲーム基本設定
+--------------------------------------------------------------------------------
+flag_quickTrun      = False :: Bool         -- クイックターンの有無
+flag_oturi          = True  :: Bool         -- おじゃまぷよのおつりの有無

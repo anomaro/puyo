@@ -14,11 +14,10 @@ import qualified Common.Direction       as Direction
 import qualified Common.Score           as Score
 import Common.Color (Color)
 import qualified Common.Field           as Field
+import qualified Common.Yokoku          as Yokoku (add)
+import qualified Common.Number          as Number
 
-import qualified Common.DataType   as T
-import qualified Common.Function    as U
 import qualified State.Setting  as V
-import qualified Common.Name      as W
 
 import State.Player.DataType
 import State.Player.Query
@@ -66,7 +65,7 @@ rewriteSpase_puyo gs state  =  do
     calculateYokoku =  do
         score <- get_score state
         let (n, newScore)  = Score.calculateYokoku score (V.get V.OjamaRate gs)
-        renewYokoku id id (n +) trt state
+        renewYokoku (Yokoku.add n) trt state
         renewScore (const newScore) state
       where
         trt = Identity.against . Identity.territory $ get_playerIdentity state
@@ -99,13 +98,13 @@ erase_unionPuyo state p = do
         eraseOjamaPuyo s p  =  renew_fieldArea s p $ Area.eracingPuyo Nothing
 
 -- エリア対象の結合チェック。このエリアがチェック対象かどうかは事前に調べてある。
-check_union :: PlayerState -> Field.Position -> IO T.NumOfUnion
+check_union :: PlayerState -> Field.Position -> IO Number.Union
 check_union state p    = do
     area <- get_fieldStateArea p state
     renew_fieldArea state p $ Area.unionCheckCompletion area
     MND.foldM (fff $ Area.color area) 1 Direction.areas
   where
-    fff :: Color -> T.NumOfUnion -> Direction.Area -> IO T.NumOfUnion
+    fff :: Color -> Number.Union -> Direction.Area -> IO Number.Union
     fff color n d = do
         area    <- get_fieldStateArea p' state
         if Area.isUnionCheck (Just color) area p'

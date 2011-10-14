@@ -44,7 +44,6 @@ where
 import Data.Maybe (fromJust)
 
 import Standardizable
-import Common.DataType
 
 import qualified State.Setting  as V
 

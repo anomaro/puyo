@@ -48,8 +48,6 @@ import Control.Applicative
 import qualified Data.IORef         as IORF
 import qualified Data.Array.IO      as AIO
 
-import qualified Common.DataType   as T
-import qualified Common.Function    as U
 import qualified State.Setting  as V
 
 import qualified Common.PlayerIdentity  as Identity
@@ -59,6 +57,11 @@ import Common.Time  (Time)
 import qualified Common.Score           as Score
 import Common.Color (Color, determine)
 import qualified Common.Field           as Field
+import qualified Common.Random          as Random (run, list)
+import qualified Common.Yokoku          as Yokoku
+import qualified Common.Number          as Number
+import qualified Common.Phase           as Phase (Game, start)
+
 --------------------------------------------------------------------------------
 (<$<) :: Functor f => (a -> b) -> (c -> f a) -> (c -> f b)
 f <$< g =  fmap f . g
@@ -75,7 +78,7 @@ get_playerIdentity  :: P'.PlayerState -> Identity.PlayerIdentity
 get_playerIdentity  =  P'.takeout_playerIdentity
 
 -- ゲーム状態を伝える。
-get_gamePhase   :: P'.PlayerState -> IO T.GamePhase
+get_gamePhase   :: P'.PlayerState -> IO Phase.Game
 get_gamePhase   =  IORF.readIORef <=< P'.takeout_gamePhaseState
 
 -- ネクストぷよの色を伝える。
@@ -99,20 +102,16 @@ get_whoWins state   =  do
 --  予告ぷよ
 --------------------------------------------------------------------------------
 -- 実際に降るおじゃまぷよの数を伝える。
-get_fallOjamaPuyo   :: Identity.Territory -> P'.PlayerState -> IO T.NumOfPuyo
+get_fallOjamaPuyo   :: Identity.Territory -> P'.PlayerState -> IO Number.Puyo
 get_fallOjamaPuyo trt state = do
     yokokuField <- IORF.readIORef $ P'.takeout_yokokuState state
-    return $ get $ (Identity.pick trt) yokokuField
-  where
-    get (P'.Advance n, _, _)    = n
+    return $ Yokoku.actual $ (Identity.pick trt) yokokuField
 
 -- 予告ぷよの数を伝える。
-get_yokoku  :: Identity.Territory -> P'.PlayerState -> IO T.NumOfPuyo
+get_yokoku  :: Identity.Territory -> P'.PlayerState -> IO Number.Puyo
 get_yokoku trt state =  do
     yokokuField <- IORF.readIORef $ P'.takeout_yokokuState state
-    return $ totalYokoku $ (Identity.pick trt) yokokuField
-  where
-    totalYokoku (P'.Advance n1, P'.Supply n2, P'.Reserve n3) = n1 + n2 + n3
+    return $ Yokoku.total $ (Identity.pick trt) yokokuField
     
 --------------------------------------------------------------------------------
 --  得点
@@ -194,7 +193,7 @@ create_playerstate pI gs stateN stateY stateL   =  do
     create_scorestate   =  IORF.newIORef Score.initial
     -- ゲーム状態を初期化。
     create_gamePhaseState   :: IO P'.GamePhaseState
-    create_gamePhaseState   =  IORF.newIORef T.BuildPhase 
+    create_gamePhaseState   =  IORF.newIORef Phase.start
     -- 操作ぷよの状態変数を初期化。
     create_ppuyostate   :: IO P'.PlayerPuyoState
     create_ppuyostate   =  IORF.newIORef P'.NonExistent
@@ -234,10 +233,10 @@ create_playerstate pI gs stateN stateY stateL   =  do
 -- ネクストぷよを初期化。
 create_nextPuyoState        :: V.GameState -> IO P'.NextPuyoState
 create_nextPuyoState  gs    =  do
-    seed    <- U.runRandom maxBound
+    seed    <- Random.run maxBound
     colors  <- V.get_ColorPattern gs
     IORF.newIORef 
-        $ map (determine colors) $ U.makeRandoms (V.get V.Color gs - 1) seed
+        $ map (determine colors) $ Random.list (V.get V.Color gs - 1) seed
         
 -- ネクストぷよをコピーする。（２Ｐ側のネクストぷよ状態を作るときに使う。）
 copy_nextPuyoState :: P'.NextPuyoState -> IO P'.NextPuyoState
@@ -246,7 +245,7 @@ copy_nextPuyoState =  IORF.newIORef <=< IORF.readIORef
 
 -- 予告ぷよを初期化。
 create_yokokuState :: IO P'.YokokuState
-create_yokokuState =  IORF.newIORef P'.defaultYokokuField
+create_yokokuState =  IORF.newIORef (Yokoku.initial, Yokoku.initial)
 
 -- 敗北フラグを初期化。
 create_loseFlagState    :: IO P'.LoseFlagState
