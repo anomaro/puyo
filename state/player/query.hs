@@ -48,8 +48,7 @@ import Control.Applicative
 import qualified Data.IORef         as IORF
 import qualified Data.Array.IO      as AIO
 
-import qualified State.Setting  as V
-
+import qualified State.Setting          as Setting
 import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
@@ -179,7 +178,7 @@ getPPFlagQuickTurn  (P'.PlayerPuyoInfo _ _ _ _ _ q)    = q :: Bool
 --  プレイヤー状態初期化
 --------------------------------------------------------------------------------
 create_playerstate      :: Identity.PlayerIdentity
-                        -> V.GameState -> P'.NextPuyoState
+                        -> Setting.Setting -> P'.NextPuyoState
                         -> P'.YokokuState -> P'.LoseFlagState
                         -> IO P'.PlayerState
 create_playerstate pI gs stateN stateY stateL   =  do
@@ -231,12 +230,12 @@ create_playerstate pI gs stateN stateY stateL   =  do
 
 
 -- ネクストぷよを初期化。
-create_nextPuyoState        :: V.GameState -> IO P'.NextPuyoState
+create_nextPuyoState        :: Setting.Setting -> IO P'.NextPuyoState
 create_nextPuyoState  gs    =  do
     seed    <- Random.run maxBound
-    colors  <- V.get_ColorPattern gs
-    IORF.newIORef 
-        $ map (determine colors) $ Random.list (V.get V.Color gs - 1) seed
+    colors  <- Setting.getColorPattern gs
+    IORF.newIORef $ map (determine colors)
+        $ Random.list (Setting.get Setting.Color gs - 1) seed
         
 -- ネクストぷよをコピーする。（２Ｐ側のネクストぷよ状態を作るときに使う。）
 copy_nextPuyoState :: P'.NextPuyoState -> IO P'.NextPuyoState

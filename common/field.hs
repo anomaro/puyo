@@ -42,19 +42,19 @@ neighbor Direction.Left  (y, x)   = (y    , x - 1)
 
 
 -- 可視範囲フィールドサイズ ＋下の壁・見えない段以上の３段。
-sizeRank    :: Setting.GameState -> Rank
+sizeRank    :: Setting.Setting -> Rank
 sizeRank    =  (+) 4 . Setting.get Setting.FieldSizeY
 
 -- 可視範囲フィールドサイズ ＋左右の壁
-sizeLine    :: Setting.GameState -> Line
+sizeLine    :: Setting.Setting -> Line
 sizeLine    =  (+) 2 . Setting.get Setting.FieldSizeX 
 
 
 -- フィールド状態を保持した配列の全要素をリストにする。（ぷよの可視範囲）
-arrayIndices        :: Setting.GameState -> [Position]
+arrayIndices        :: Setting.Setting -> [Position]
 arrayIndices gs     = [(y, x) | y <- [topRank .. (-1 + sizeRank gs)]
                               , x <- [2 ..       (-1 + sizeLine gs)] ]
 
 -- 窒息点
-critical    :: Setting.GameState -> Position
+critical    :: Setting.Setting -> Position
 critical gs =  (topRank, (sizeLine gs + 1) `quot` 2)

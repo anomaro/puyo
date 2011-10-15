@@ -1,19 +1,12 @@
 module State.Setting
-( GameState
+( Setting
+, Item (..)
+, Value
+
 , get
-, get_ColorPattern
-, newGameState
-
-, GameStateIndex (..)
-, GameStateValue
-, initialGameState
-
-, yokokuLv1
-, yokokuLv2
-, yokokuLv3
-, yokokuLv4
-, yokokuLv5
-, yokokuLv6
+, getColorPattern
+, renew
+, initial
 
 , flag_quickTrun
 , flag_oturi
@@ -21,22 +14,20 @@ module State.Setting
 
 -- ゲーム環境の設定等を決める値
 -- 色数・ぷよの消える数・おじゃまぷよレートなどなど。。。
+import qualified Data.Vector.Unboxed    as VCU
 
 import qualified Common.Number          as Number
 import qualified Common.Color           as Color
 import qualified Common.Random          as Random (run)
 
-import qualified Data.Vector.Unboxed    as VCU
-
 --------------------------------------------------------------------------------
 --  型
 --------------------------------------------------------------------------------
-data GameState = GameState GameStateValues      -- Int
-                           ColorPattern         -- 色パターン
+data Setting   = Setting Values ColorPattern
 
-type GameStateValues    = VCU.Vector GameStateValue
-type GameStateValue     = Int
-data GameStateIndex     -- GameStateの値の種類を表す。
+type Values    = VCU.Vector Value
+type Value     = Int
+data Item     -- GameStateの値の種類を表す。
         = FallTime      -- 落下時間
         | ErasePuyo     -- ぷよの消える数
         | Color         -- ぷよの色の数
@@ -52,15 +43,8 @@ type ColorPattern   = IO Color.ColorAssortment
 --------------------------------------------------------------------------------
 --  既定値
 --------------------------------------------------------------------------------
-defaultGameState :: GameStateValues
-defaultGameState =  VCU.generate numOfGSI $ defaultValue . toEnum
-
-initialGameState    :: GameState
-initialGameState    =  GameState defaultGameState 
-                                 (randomColorPattern $ limitValue max Color)
-
 -- 各値の初期値
-defaultValue                :: GameStateIndex -> GameStateValue
+defaultValue                :: Item -> Value
 defaultValue FallTime       =  40
 defaultValue ErasePuyo      =  4
 defaultValue Color          =  4
@@ -83,27 +67,39 @@ limitValue f NextPuyoView   = f 0   6
 -- GameStateの値の種類（GameStateIndex）の値の総数。
 numOfGSI    = 1 + fromEnum lastGSI  :: Int
 
-headGSI = minBound  :: GameStateIndex
-lastGSI = maxBound  :: GameStateIndex
+headGSI = minBound  :: Item
+lastGSI = maxBound  :: Item
+
+--------------------------------------------------------------------------------
+--  初期値
+--------------------------------------------------------------------------------
+initial :: Setting
+initial =  Setting values (randomColorPattern $ limitValue max Color)
+  where
+    values   =  VCU.generate numOfGSI $ defaultValue . toEnum :: Values
+
+    randomColorPattern      :: Number.Colors -> ColorPattern
+    randomColorPattern  noc =  do
+        val     <- Random.run $ Color.totalAssortments noc - 1
+        return $ Color.assortments !! val
 
 --------------------------------------------------------------------------------
 --  読み取り
 --------------------------------------------------------------------------------
 -- 値を取り出す。 ・・・値の種類（GameStateIndex）を指定して、GameStateから取り出す。
-get :: GameStateIndex -> GameState          -> GameStateValue
-get =  \i             -> \(GameState v _)   -> v VCU.! fromEnum i
+get ::  Item -> Setting          -> Value
+get =  \i             -> \(Setting v _)   -> v VCU.! fromEnum i
 
 -- 色パターン
-get_ColorPattern    :: GameState        -> ColorPattern
-get_ColorPattern =  \(GameState _ c)    -> c
+getColorPattern    :: Setting -> ColorPattern
+getColorPattern =  \(Setting _ c)    -> c
 
 --------------------------------------------------------------------------------
 --  書き換え
 --------------------------------------------------------------------------------
 -- 値を書き換える
-newGameState    :: (GameStateValue -> GameStateValue) -> GameStateIndex 
-                -> GameState -> GameState
-newGameState f i gs@(GameState gv cp)   = GameState gv' cp
+renew    :: (Value -> Value) -> Item -> Setting -> Setting
+renew f i gs@(Setting gv cp)   = Setting gv' cp
   where
     gv' = gv VCU.// [(i', e')]
     i'  = fromEnum i
@@ -111,36 +107,6 @@ newGameState f i gs@(GameState gv cp)   = GameState gv' cp
         | e'' < limitValue min i    = limitValue max i
         | otherwise                 = e''
     e'' = f $ get i gs
-
---------------------------------------------------------------------------------
---  予告ぷよ
---------------------------------------------------------------------------------
-yokokuLv1    = 1
-yokokuLv2 gs    | fieldSizeX > 1    = yokokuLv1 * fieldSizeX
-                | otherwise         = 2
-  where fieldSizeX = get FieldSizeX gs
---yokokuLv3 gs    | fieldSizeX > 1    = Field.sizeYyokokuLv3 * yokokuLv2 gs
-yokokuLv3 gs    | fieldSizeX > 1    = 5 * yokokuLv2 gs
-                | otherwise         = 3
-  where fieldSizeX = get FieldSizeX gs
-yokokuLv4 gs    | fieldSizeX > 1    = fieldSizeX * yokokuLv3 gs
-                | otherwise         = 4
-  where fieldSizeX = get FieldSizeX gs
-yokokuLv5 gs    | fieldSizeX > 1    = 2 * yokokuLv4 gs
-                | otherwise         = 5
-  where fieldSizeX = get FieldSizeX gs
-yokokuLv6 gs    | fieldSizeX > 1    = 2 * yokokuLv5 gs
-                | otherwise         = 6
-  where fieldSizeX = get FieldSizeX gs
-
---------------------------------------------------------------------------------
---  色パターン
---------------------------------------------------------------------------------
--- ランダムな色パターンを作る。
-randomColorPattern  :: Number.Colors -> ColorPattern
-randomColorPattern  =  \noc          -> do
-    val     <- Random.run $ Color.totalAssortments noc - 1
-    return $ Color.assortments !! val
 
 --------------------------------------------------------------------------------
 --  ゲーム基本設定

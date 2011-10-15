@@ -2,6 +2,8 @@ module Common.Yokoku
 where
 
 import qualified Common.Number          as Number
+import qualified State.Setting          as Setting
+import qualified Common.Field           as Field (sizeYyokokuLv3)
 
 --------------------------------------------------------------------------------
 --  Œ^
@@ -32,6 +34,9 @@ instance Functor Progress  where
 --------------------------------------------------------------------------------
 initial  =  (Fall 0, Fixed 0, Progress 0)    :: Shelf
 
+-- è¦Î‚Õ‚æ‚ª‚à‚½‚ç‚·‚¨‚¶‚á‚Ü‚Õ‚æ‚Ì—ÊB
+insekiVolume gs = ojamaVolume 3 gs
+
 --------------------------------------------------------------------------------
 --  ŠÖ”
 --------------------------------------------------------------------------------
@@ -60,3 +65,16 @@ exhale n (Fall a, b, c) = (Fall (a - n), b, c)
 
 reset :: Shelf -> Shelf
 reset (a, Fixed b, c)    =  (a, Fixed (b + 1), c)
+
+--------------------------------------------------------------------------------
+--  —Ê
+--------------------------------------------------------------------------------
+ojamaVolume                         :: Int -> Setting.Setting -> Number.Puyo
+ojamaVolume 1 _                     =  1
+ojamaVolume 2 gs | rankSize gs > 1  =  ojamaVolume 1 gs * rankSize gs
+ojamaVolume 3 gs | rankSize gs > 1  =  ojamaVolume 2 gs * Field.sizeYyokokuLv3
+ojamaVolume 4 gs | rankSize gs > 1  =  ojamaVolume 3 gs * rankSize gs
+ojamaVolume n gs | rankSize gs > 1  =  ojamaVolume (n - 1) gs * 2
+ojamaVolume n _                     =  n
+
+rankSize gs    = Setting.get Setting.FieldSizeX gs

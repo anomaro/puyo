@@ -1,10 +1,10 @@
 -- configuration.hs
 module State.Configuration
-    where
+where
 
 import Data.Maybe (isJust, fromJust)
 
-import qualified State.Setting      as V
+import qualified State.Setting      as Setting (Item (..), Setting, get)
 import qualified Common.Time        as Time (Time, inputConfig)
 
 --------------------------------------------------------------------------------
@@ -48,21 +48,21 @@ toEntryName FieldSizeX      =  "FieldSize(Width)"
 toEntryName NextPuyoView    =  "NextPuyo"
 
 -- ゲーム環境の値との対応
-toGameStateIndex    :: Entry -> Maybe V.GameStateIndex
-toGameStateIndex FallTime       =  Just V.FallTime
-toGameStateIndex ErasePuyo      =  Just V.ErasePuyo
-toGameStateIndex Color          =  Just V.Color
-toGameStateIndex OjamaRate      =  Just V.OjamaRate
-toGameStateIndex MarginTime     =  Just V.MarginTime
-toGameStateIndex FieldSizeY     =  Just V.FieldSizeY
-toGameStateIndex FieldSizeX     =  Just V.FieldSizeX
-toGameStateIndex NextPuyoView   =  Just V.NextPuyoView
+toGameStateIndex    :: Entry -> Maybe Setting.Item
+toGameStateIndex FallTime       =  Just Setting.FallTime
+toGameStateIndex ErasePuyo      =  Just Setting.ErasePuyo
+toGameStateIndex Color          =  Just Setting.Color
+toGameStateIndex OjamaRate      =  Just Setting.OjamaRate
+toGameStateIndex MarginTime     =  Just Setting.MarginTime
+toGameStateIndex FieldSizeY     =  Just Setting.FieldSizeY
+toGameStateIndex FieldSizeX     =  Just Setting.FieldSizeX
+toGameStateIndex NextPuyoView   =  Just Setting.NextPuyoView
 --toGameStateIndex _              =  Nothing
 
 -- ゲーム環境の値を得る。
-getGameStateValue           :: Entry -> V.GameState -> String
+getGameStateValue           :: Entry -> Setting.Setting -> String
 getGameStateValue ent
-  | isJust index    = show . V.get (fromJust index) 
+  | isJust index    = show . Setting.get (fromJust index) 
   | otherwise       = const "" 
   where
     index   = toGameStateIndex ent

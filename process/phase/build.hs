@@ -19,7 +19,7 @@ import State.Player.Overwriting (
     renewScore,
     renewLoseFlag,
     )
-import qualified State.Setting          as V
+import State.Setting (Setting)
 import qualified Common.PlayerIdentity  as Identity
 import qualified Common.Area            as Area  (isPuyo)
 import qualified Common.Direction       as Direction
@@ -30,7 +30,7 @@ import qualified Common.Field           as Field
 --------------------------------------------------------------------------------
 --  ‘€ì‚Õ‚æ‚ð¶¬
 --------------------------------------------------------------------------------
-build_playerPuyo        :: V.GameState -> P.PlayerState -> IO()
+build_playerPuyo            :: Setting -> P.PlayerState -> IO()
 build_playerPuyo gs state   =  do
     renewScore Score.refresh state
     color   <- pick_nextPuyoColor state
@@ -59,7 +59,7 @@ pick_nextPuyoColor state    = do
 --  ”s–k”»’è
 --------------------------------------------------------------------------------
 -- ”s–k”»’è i”s–k‚µ‚Ä‚¢‚½‚çA”s–kðŒ‚ð‘‚«Š·‚¦True‚ð•Ô‚·Bj
-checkLose           :: V.GameState -> P.PlayerState -> IO Bool
+checkLose           :: Setting -> P.PlayerState -> IO Bool
 checkLose gs state  =  do
     area <- get_fieldStateArea (Field.critical gs) state
     when (Area.isPuyo area) $ renewLoseFlag True trt state

@@ -9,8 +9,6 @@ import Control.Applicative
 import qualified Graphics.UI.GLUT   as GLUT 
 import qualified System.Exit        as EXIT (ExitCode(ExitSuccess), exitWith)
 
-import qualified State.Setting  as V (GameState, initialGameState)
-
 import qualified Process.Game   as G
 import qualified Render             as R
 import qualified Render.Common      as W (window_sizeY, window_sizeX)
@@ -27,12 +25,13 @@ import qualified State.Player.DataType  as P
 import qualified State.Player.Query     as Q
 import qualified Process.Configuration  as C
 import qualified Common.Time            as Time (frameRate)
+import qualified State.Setting          as Setting (initial)
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 main :: IO ()
 main =  do
-    stage           <- S.createConfigurationStage V.initialGameState
+    stage           <- S.createConfigurationStage Setting.initial
     buttonState     <- I.create_buttonState
 
     GLUT.initialDisplayMode GLUT.$=  [ GLUT.DoubleBuffered, GLUT.RGBMode ]

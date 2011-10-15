@@ -37,16 +37,15 @@ import qualified Common.Score           as Score
 import Common.Color (Color)
 import qualified Common.Field           as Field
 import qualified Common.Number          as Number
-
---import qualified Common.DataType   as T
-import qualified State.Setting  as V
+import qualified Common.Yokoku          as Yokoku (ojamaVolume)
+import qualified State.Setting          as Setting
 
 import Render.Object
 
 --------------------------------------------------------------------------------
 --  ゲームの描画
 --------------------------------------------------------------------------------
-render_gameField :: V.GameState -> PlayerState -> D.GameDataCollection -> IO()
+render_gameField :: Setting.Setting -> PlayerState -> D.GameDataCollection -> IO()
 render_gameField gs state gdc   =  do
     render_backfield                        gs state     -- フィールド背景の描画
     render_field                            gs state     -- フィールドの描画
@@ -64,11 +63,11 @@ checkExistent state a =  get_PlayerPuyoExistent state >>= \b  -> MND.when b a
 --  基本描画設定
 --------------------------------------------------------------------------------
 -- 実際の１エリアあたりの大きさ。
-unitAreaY   = (*) unitAreaY' . reviseViewSize   :: V.GameState -> Double
-unitAreaX   = (*) unitAreaX' . reviseViewSize   :: V.GameState -> Double
+unitAreaY   = (*) unitAreaY' . reviseViewSize   :: Setting.Setting -> Double
+unitAreaX   = (*) unitAreaX' . reviseViewSize   :: Setting.Setting -> Double
 
 -- フィールドサイズ補正
-reviseViewSize      :: V.GameState -> Double
+reviseViewSize      :: Setting.Setting -> Double
 reviseViewSize gs   =  min ratioY ratioX
   where
     ratioY  = defaultViewFieldSizeY / fromIntegral (Field.sizeRank gs)
@@ -79,10 +78,10 @@ defaultViewFieldSizeY   = 16    :: Double
 defaultViewFieldSizeX   = 8     :: Double
 
 -- フィールドを描画するウィンドウ上の位置。左上のエリアがこの位置に描画される。
-field_pointY    :: V.GameState -> Double
+field_pointY    :: Setting.Setting -> Double
 field_pointY    =  (+) 1  . unitAreaY
 
-field_pointX :: Identity.Territory -> V.GameState -> Double
+field_pointX :: Identity.Territory -> Setting.Setting -> Double
 field_pointX trt gs = Identity.pick trt (l, r)
   where
     l = - 1 + unitAreaX gs
@@ -93,7 +92,7 @@ field_pointX trt gs = Identity.pick trt (l, r)
 --------------------------------------------------------------------------------
 --  勝利数描画   
 --------------------------------------------------------------------------------
-render_wins :: V.GameState -> PlayerState -> D.GameDataCollection -> IO()
+render_wins :: Setting.Setting -> PlayerState -> D.GameDataCollection -> IO()
 render_wins gs state gdc    =  do
     GLUT.lineWidth GLUT.$= 2.0
     GLUT.color (GLUT.Color3 1.0 1.0 1.0 :: GLUT.Color3 Double)
@@ -110,44 +109,41 @@ render_wins gs state gdc    =  do
 --------------------------------------------------------------------------------
 --  予告ぷよ描画    
 --------------------------------------------------------------------------------
-render_yokoku           :: V.GameState -> PlayerState -> IO()
+render_yokoku           :: Setting.Setting -> PlayerState -> IO()
 render_yokoku gs state  =  do
     numOfOjama  <- get_yokoku trt state
     zipWithM_ f targetArea $ objs numOfOjama
   where
     targetArea  = [(Field.hidingBottomRank, x + 1) | x <- targetPosX]
     targetPosX  = [1..fieldSizeX]
-    fieldSizeX  = V.get V.FieldSizeX gs
+    fieldSizeX  = Setting.get Setting.FieldSizeX gs
     objs n      = reverse $ yokokuKinds' n gs
     trt         = Identity.territory $ get_playerIdentity state
     f p o   = render_fieldObject' gs trt p 0 0 1 1 0 o
 
 -- 予告ぷよの表示する種類を決める。
-yokokuKinds'    :: Number.Puyo -> V.GameState -> [GameObject]
+yokokuKinds'    :: Number.Puyo -> Setting.Setting -> [GameObject]
 yokokuKinds' n gs   = yokokuKinds n 0 gs []
   where
-    yokokuKinds :: Number.Puyo -> Field.Line -> V.GameState -> [GameObject]
+    yokokuKinds :: Number.Puyo -> Field.Line -> Setting.Setting -> [GameObject]
                 -> [GameObject]
     yokokuKinds 0 x gs objs = objs
     yokokuKinds n x gs objs
-     | x == fieldSizeX     = objs
-     | n >= V.yokokuLv6 gs = yokokuKinds (f V.yokokuLv6) x' gs (g objYokokuLv6)
-     | n >= V.yokokuLv5 gs = yokokuKinds (f V.yokokuLv5) x' gs (g objYokokuLv5)
-     | n >= V.yokokuLv4 gs = yokokuKinds (f V.yokokuLv4) x' gs (g objYokokuLv4)
-     | n >= V.yokokuLv3 gs = yokokuKinds (f V.yokokuLv3) x' gs (g objYokokuLv3)
-     | n >= V.yokokuLv2 gs = yokokuKinds (f V.yokokuLv2) x' gs (g objYokokuLv2)
-     | otherwise           = yokokuKinds n'              x' gs (g objYokokuLv1)
+     | x == fieldSizeX  = objs
+     | n >= level 6     = yokokuKinds (n - level 6) x' gs (objYokokuLv6 : objs)
+     | n >= level 5     = yokokuKinds (n - level 5) x' gs (objYokokuLv5 : objs)
+     | n >= level 4     = yokokuKinds (n - level 4) x' gs (objYokokuLv4 : objs)
+     | n >= level 3     = yokokuKinds (n - level 3) x' gs (objYokokuLv3 : objs)
+     | n >= level 2     = yokokuKinds (n - level 2) x' gs (objYokokuLv2 : objs)
+     | otherwise        = yokokuKinds (n - level 1) x' gs (objYokokuLv1 : objs)
       where
-        fieldSizeX  = V.get V.FieldSizeX gs
+        fieldSizeX  = Setting.get Setting.FieldSizeX gs
         x'  = x + 1
-        n'  = n - V.yokokuLv1
-        f v = n - v gs
-        g o = o : objs
-
+        level n = Yokoku.ojamaVolume n gs
 --------------------------------------------------------------------------------
 --  得点描画    
 --------------------------------------------------------------------------------
-render_score            :: V.GameState -> PlayerState -> IO()
+render_score            :: Setting.Setting -> PlayerState -> IO()
 render_score gs state   =  do
     GLUT.lineWidth GLUT.$= 3.0
     GLUT.color (GLUT.Color3 1.0 1.0 1.0 :: GLUT.Color3 Double)
@@ -163,7 +159,7 @@ render_score gs state   =  do
 --------------------------------------------------------------------------------
 --  落下予測地点描画
 --------------------------------------------------------------------------------
-render_fallPoint            :: V.GameState -> PlayerState -> IO()
+render_fallPoint            :: Setting.Setting -> PlayerState -> IO()
 render_fallPoint gs state   =  do
     (cb, cm)    <- get_PlayerPuyoColors     state
     pos         <- get_PlayerPuyoPosition   state
@@ -194,16 +190,16 @@ render_fallPoint gs state   =  do
 --------------------------------------------------------------------------------
 --  ネクストぷよ描画
 --------------------------------------------------------------------------------
-render_nextPuyo             :: V.GameState -> PlayerState -> IO()
+render_nextPuyo             :: Setting.Setting -> PlayerState -> IO()
 render_nextPuyo gs state    =  do
     colors <- get_nextPuyoColors state
-    render_nextPuyo' colors $ V.get V.NextPuyoView gs
+    render_nextPuyo' colors $ Setting.get Setting.NextPuyoView gs
   where
     render_nextPuyo' :: [Color] -> Number.PuyoPair -> IO()
     render_nextPuyo' _          0   = return ()
     render_nextPuyo' (cb:cm:cs) n   = do
         let trt = Identity.territory $ get_playerIdentity state
-            n'  = (V.get V.NextPuyoView gs - n) * 2
+            n'  = (Setting.get Setting.NextPuyoView gs - n) * 2
             y   = Field.topRank + n'
             x   = if trt == Identity.Left 
                     then Field.sizeLine gs + 1
@@ -218,7 +214,7 @@ render_nextPuyo gs state    =  do
 --------------------------------------------------------------------------------
 --  操作ぷよ描画
 --------------------------------------------------------------------------------
-render_playerPuyo           :: V.GameState -> PlayerState -> IO()
+render_playerPuyo           :: Setting.Setting -> PlayerState -> IO()
 render_playerPuyo gs state  =  do
     color       <- get_PlayerPuyoColors     state
     (y, x)      <- get_PlayerPuyoPosition   state
@@ -232,7 +228,7 @@ render_playerPuyo gs state  =  do
                            -> Direction.Area -> Time.Time -> (Color, Color)
                            -> IO()
     render_fieldObject' (y, x) fallTime d rotateTime (cb, cm) = do  
-        let fallTime'   = V.get V.FallTime gs
+        let fallTime'   = Setting.get Setting.FallTime gs
             (y', x')    = (fromIntegral y, fromIntegral x)
             trt         = Identity.territory $ get_playerIdentity state
             posY    = field_pointY     gs - (unitAreaY gs * (y' - 1) ) * 2
@@ -249,7 +245,7 @@ render_playerPuyo gs state  =  do
                             sc sc 0 $ objPuyo cb
 
 -- 回転の描画のずれの数値。
-rotateGap :: V.GameState -> Direction.Area -> Time.Time -> (Double, Double)
+rotateGap :: Setting.Setting -> Direction.Area -> Time.Time -> (Double, Double)
 rotateGap gs direction rotateTime  = 
     let r = pi * fromIntegral rotateTime / (2 * fromIntegral Time.animeRotate)
     in
@@ -265,7 +261,7 @@ rotateGap gs direction rotateTime  =
 --------------------------------------------------------------------------------
 --  フィールド背景描画
 --------------------------------------------------------------------------------
-render_backfield            :: V.GameState -> PlayerState -> IO()
+render_backfield            :: Setting.Setting -> PlayerState -> IO()
 render_backfield gs state   =  MND.mapM_ f $ Field.arrayIndices gs
   where
     trt = Identity.territory $ get_playerIdentity state
@@ -275,7 +271,7 @@ render_backfield gs state   =  MND.mapM_ f $ Field.arrayIndices gs
 --  フィールド描画
 --------------------------------------------------------------------------------
 -- フィールドを描画
-render_field            :: V.GameState -> PlayerState -> IO()
+render_field            :: Setting.Setting -> PlayerState -> IO()
 render_field gs state   =  MND.mapM_ f $ Field.arrayIndices gs
   where
     f p =  renew_animationType state p         -- アニメーション状態の更新。 
@@ -308,8 +304,8 @@ neighborSameColorPuyo area p state
 --  エリア描画    
 --------------------------------------------------------------------------------
 -- フィールドのぷよの描画。（色ぷよ・おじゃまぷよ）
-render_fieldPuyo    :: V.GameState -> Identity.Territory -> Area.AnimationType 
-                    -> Field.Position -> GameObject -> IO()
+render_fieldPuyo :: Setting.Setting -> Identity.Territory -> Area.AnimationType 
+                 -> Field.Position -> GameObject -> IO()
 render_fieldPuyo gs trt anime pos@(y, _) obj
     = case Area.morph anime height of
         Nothing -> return ()
@@ -320,15 +316,15 @@ render_fieldPuyo gs trt anime pos@(y, _) obj
 
 
 -- フィールド座標とオブジェクトを指定して、その位置に描画する。
-render_fieldObject  :: V.GameState -> Identity.Territory -> Field.Position
+render_fieldObject  :: Setting.Setting -> Identity.Territory -> Field.Position
                     -> GameObject -> IO()
 render_fieldObject gs trt p obj = render_fieldObject' gs trt p 0 0 1 1 0 obj
 
 
-render_fieldObject' :: V.GameState -> Identity.Territory -> Field.Position ->
-                        GLUT.GLdouble -> GLUT.GLdouble ->
-                        GLUT.GLdouble -> GLUT.GLdouble ->
-                        GLUT.GLdouble -> GameObject -> IO()
+render_fieldObject' :: Setting.Setting -> Identity.Territory -> Field.Position
+                    -> GLUT.GLdouble -> GLUT.GLdouble
+                    -> GLUT.GLdouble -> GLUT.GLdouble
+                    -> GLUT.GLdouble -> GameObject -> IO()
 render_fieldObject' gs trt (y, x) mx my sx sy r obj = do
     let (y', x') = (fromIntegral y, fromIntegral x)
         posY = field_pointY     gs - (unitAreaY gs * (y' - 1) ) * 2

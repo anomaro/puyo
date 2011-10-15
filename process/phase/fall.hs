@@ -6,15 +6,6 @@ module Process.Phase.Fall
 import Data.List (delete)
 import Control.Monad
 
-import qualified Common.PlayerIdentity  as Identity (against, territory)
-import qualified Common.Area            as Area
-import qualified Common.Direction       as Direction
-import qualified Common.Field           as Field
-import qualified Common.Random          as Random (run)
-import qualified Common.Yokoku          as Yokoku (fixed, fall, exhale, reset)
-
-import qualified State.Setting   as V
-
 import State.Player.DataType    as P
 import State.Player.Query (
     get_playerIdentity,
@@ -25,26 +16,31 @@ import State.Player.Overwriting (
     renew_fieldArea,
     renewYokoku,
     )
+import qualified Common.PlayerIdentity  as Identity (against, territory)
+import qualified Common.Area            as Area
+import qualified Common.Direction       as Direction
+import qualified Common.Field           as Field
+import qualified Common.Random          as Random (run)
+import qualified Common.Yokoku          as Yokoku
+import qualified State.Setting          as Setting
 
 --------------------------------------------------------------------------------
 --  
 --------------------------------------------------------------------------------
 -- 相手側のおじゃまぷよをReserveからSupplyへ、(連鎖によるおじゃまぷよ量の確定。)
 -- 自分のおじゃまぷよをSupplyからAdvanceへ（おじゃまぷよ落下の確定。）
-moveYokokuPuyo  :: V.GameState -> P.PlayerState -> IO()
+moveYokokuPuyo  :: Setting.Setting -> P.PlayerState -> IO()
 moveYokokuPuyo gs state =  do
     renewYokoku Yokoku.fixed other state
-    renewYokoku (Yokoku.fall yokokuLv3) own state
+    renewYokoku (Yokoku.fall $ Yokoku.insekiVolume gs) own state
   where 
     own     = Identity.territory $ get_playerIdentity state
     other   = Identity.against own
-    -- 隕石ぷよがもたらすおじゃまぷよの量。
-    yokokuLv3 = V.yokokuLv3 gs
-    
+
 --------------------------------------------------------------------------------
 --  おじゃまぷよを実際に落下させる。
 --------------------------------------------------------------------------------
-putOjamaPuyo  :: V.GameState -> P.PlayerState -> IO Bool
+putOjamaPuyo  :: Setting.Setting -> P.PlayerState -> IO Bool
 putOjamaPuyo gs state =  do
     numOfOjama  <- get_fallOjamaPuyo trt state
     renewYokoku (Yokoku.exhale (sieve numOfOjama)) trt state
@@ -57,7 +53,7 @@ putOjamaPuyo gs state =  do
     
   where
     trt         = Identity.territory $ get_playerIdentity state
-    fieldSizeX  = V.get V.FieldSizeX gs
+    fieldSizeX  = Setting.get Setting.FieldSizeX gs
     sieve n | n > fieldSizeX    = fieldSizeX
             | otherwise         = n
     targetAreaPosition ns = [(Field.hidingBottomRank, x)| x <- ns]
@@ -66,7 +62,7 @@ putOjamaPuyo gs state =  do
         area <- get_fieldStateArea p state
         if Area.isSpace area
           then renew_fieldArea state p Area.defaultOjamaPuyo
-          else when V.flag_oturi $ renewYokoku Yokoku.reset trt state
+          else when Setting.flag_oturi $ renewYokoku Yokoku.reset trt state
 
 -- nからmまでのランダムなリストを得る。
 fromRandomTo :: Int -> Int -> IO [Int]

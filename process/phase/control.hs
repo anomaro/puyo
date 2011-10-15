@@ -23,7 +23,7 @@ import State.Player.Overwriting (
     renew_playerPuyo,
     shift_gamePhase,
     )
-import qualified State.Setting          as V
+import qualified State.Setting          as Setting
 import qualified Common.Direction       as Direction
 import qualified Common.Time            as Time (Time, animeRotate, count)
 import qualified Common.Field           as Field (neighbor)
@@ -32,7 +32,7 @@ import qualified Common.Phase           as Phase (Game(Drop))
 --------------------------------------------------------------------------------
 -- 自然落下処理。（移動した場合はTrueを返す。）
 --------------------------------------------------------------------------------
-fallNatural_playerPuyo :: PlayerState -> V.GameState -> IO Bool
+fallNatural_playerPuyo :: PlayerState -> Setting.Setting -> IO Bool
 fallNatural_playerPuyo state gs = do
     timeF   <- get_PlayerPuyoFallTime state
     if timeF > 0
@@ -53,7 +53,7 @@ fallNatural_playerPuyo state gs = do
 --------------------------------------------------------------------------------
 -- 操作ぷよの落下移動。（移動した場合はTrueを返す。）
 --------------------------------------------------------------------------------
-fall_puyo           :: PlayerState -> V.GameState -> IO Bool
+fall_puyo           :: PlayerState -> Setting.Setting -> IO Bool
 fall_puyo state gs  =  reset_fallTime >> move_puyo state Direction.Down
   where
     -- カウンタをリセットする。
@@ -64,7 +64,7 @@ fall_puyo state gs  =  reset_fallTime >> move_puyo state Direction.Down
             renew_playerPuyo state Nothing
                                    Nothing
                                    Nothing
-                                   (Just $ V.get V.FallTime gs)
+                                   (Just $ Setting.get Setting.FallTime gs)
                                    Nothing
                                    Nothing
 
@@ -144,7 +144,7 @@ rotate_puyo state rd    = do
                                Nothing
                                Nothing
                                Nothing
-                               (Just V.flag_quickTrun)
+                               (Just Setting.flag_quickTrun)
 
 --------------------------------------------------------------------------------
 -- 移動できるかどうか判定。（隣接するマスが空白かどうか調べる。）

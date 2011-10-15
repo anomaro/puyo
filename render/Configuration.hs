@@ -3,14 +3,14 @@ where
 
 import qualified Graphics.UI.GLUT   as GLUT
 
-import qualified State.Setting  as V
+import State.Setting  (Setting)
 import Render.Object
 import State.Configuration
 
 --------------------------------------------------------------------------------
 --  Ý’è‰æ–Ê•`‰æ
 --------------------------------------------------------------------------------
-renderConfiguration         :: V.GameState -> Selection -> IO ()
+renderConfiguration         :: Setting -> Selection -> IO ()
 renderConfiguration gs sl   =  do
     GLUT.lineWidth GLUT.$= 3.0
     GLUT.color (GLUT.Color3 1.0 1.0 1.0 :: GLUT.Color3 Double)

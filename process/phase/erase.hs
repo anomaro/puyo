@@ -8,6 +8,10 @@ module Process.Phase.Erase
 
 import qualified Control.Monad      as MND
 
+import State.Player.DataType
+import State.Player.Query
+import State.Player.Overwriting
+import Standardizable
 import qualified Common.PlayerIdentity  as Identity (against, territory)
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
@@ -16,19 +20,12 @@ import Common.Color (Color)
 import qualified Common.Field           as Field
 import qualified Common.Yokoku          as Yokoku (add)
 import qualified Common.Number          as Number
-
-import qualified State.Setting  as V
-
-import State.Player.DataType
-import State.Player.Query
-import State.Player.Overwriting
-
-import Standardizable
+import qualified State.Setting          as Setting
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 -- 結合状態を調べてぷよを消滅させる。ぷよが消えた場合True
-erase_puyo          :: V.GameState -> PlayerState -> IO Bool
+erase_puyo          :: Setting.Setting -> PlayerState -> IO Bool
 erase_puyo gs state =  do
     renewScore Score.expandChain state
     MND.foldM f False $ Field.arrayIndices gs
@@ -39,7 +36,7 @@ erase_puyo gs state =  do
         numUnion    <- if Area.isUnionCheck Nothing area p
                          then check_union state p
                          else return 0
-        bool    <- if numUnion < V.get V.ErasePuyo gs
+        bool    <- if numUnion < Setting.get Setting.ErasePuyo gs
                  then return False
                  else do
                 area <- get_fieldStateArea p state
@@ -50,7 +47,7 @@ erase_puyo gs state =  do
         return $ b || bool
 
 -- 結合状態を調べてぷよを消滅させる。（消滅フラグが立っているエリアを空白にする）
-rewriteSpase_puyo           :: V.GameState -> PlayerState -> IO ()
+rewriteSpase_puyo           :: Setting.Setting -> PlayerState -> IO ()
 rewriteSpase_puyo gs state  =  do
     MND.mapM_ f $ Field.arrayIndices gs
     renewScore Score.calculate state
@@ -64,7 +61,7 @@ rewriteSpase_puyo gs state  =  do
     -- 予告ぷよを算出する。
     calculateYokoku =  do
         score <- get_score state
-        let (n, newScore)  = Score.calculateYokoku score (V.get V.OjamaRate gs)
+        let (n, newScore)  = Score.calculateYokoku score (Setting.get Setting.OjamaRate gs)
         renewYokoku (Yokoku.add n) trt state
         renewScore (const newScore) state
       where

@@ -12,7 +12,7 @@ import qualified Common.Direction       as Direction
 import qualified Common.Time            as Time
 import qualified Common.Score           as Score
 import qualified Common.Phase           as Phase
-import qualified State.Setting          as V (GameState)
+import State.Setting (Setting)
 import qualified Input                  as I
 import qualified Process.Phase.Build    as B
 import qualified Process.Phase.Control  as C
@@ -40,7 +40,7 @@ wrapMaybe p x   =  if p then Just x else Nothing
 --  ゲーム状態遷移
 --------------------------------------------------------------------------------
 -- ゲームオーバーフェーズに移行していた場合、Falseを返す。
-convert_gamePhase :: PlayerState -> I.ButtonState -> V.GameState -> IO Bool
+convert_gamePhase :: PlayerState -> I.ButtonState -> Setting -> IO Bool
 convert_gamePhase state stateB gs =
     get_gamePhase state 
     >>= \gamePhase  -> (convert_gamePhase' gamePhase) state
@@ -82,7 +82,7 @@ animation time nextPhase state
 --------------------------------------------------------------------------------
 --  BuildPhase      ぷよ生成
 --------------------------------------------------------------------------------
-build_playerPuyo            :: V.GameState -> PlayerState -> IO()
+build_playerPuyo            :: Setting -> PlayerState -> IO()
 build_playerPuyo gs state   =  do
     loseFlag    <- B.checkLose gs state
     if loseFlag
@@ -92,7 +92,7 @@ build_playerPuyo gs state   =  do
 --------------------------------------------------------------------------------
 --  ContralPhase    操作ぷよの更新
 --------------------------------------------------------------------------------
-control_playerPuyo :: I.ButtonState -> V.GameState -> PlayerState -> IO()
+control_playerPuyo :: I.ButtonState -> Setting -> PlayerState -> IO()
 control_playerPuyo stateB gs state = do
     flagGameEnd <- check_gameEnd state
     if flagGameEnd
@@ -103,7 +103,7 @@ control_playerPuyo stateB gs state = do
           of Identity.User     -> control_playerPuyo' listB            gs state
              Identity.Com name -> control_playerPuyo' I.testButtonList gs state
 
-control_playerPuyo' :: [I.Button] -> V.GameState -> PlayerState -> IO()
+control_playerPuyo' :: [I.Button] -> Setting -> PlayerState -> IO()
 control_playerPuyo' listB gs state  = do
     C.fallNatural_playerPuyo state gs
     flag_playerrotate   <- rotate_playerPuyo state listB
@@ -113,7 +113,7 @@ control_playerPuyo' listB gs state  = do
        shift_gamePhase state . Phase.Animation Time.animeMove )
      
 -- ボタン状態を調べてぷよを移動する。
-move_playerPuyo :: V.GameState -> PlayerState -> [I.Button] -> IO Bool
+move_playerPuyo :: Setting -> PlayerState -> [I.Button] -> IO Bool
 move_playerPuyo gs state buttons =
     let r   = wrapMaybe (elem I.right_button buttons) Direction.Right
         l   = wrapMaybe (elem I.left_button  buttons) Direction.Left
@@ -142,7 +142,7 @@ rotate_playerPuyo state buttons =
 --------------------------------------------------------------------------------
 --  DropPhase       ちぎりやぷよ消滅後に起こるぷよ落下
 --------------------------------------------------------------------------------
-drop_fieldPuyo          :: V.GameState -> PlayerState -> IO()
+drop_fieldPuyo          :: Setting -> PlayerState -> IO()
 drop_fieldPuyo gs state =  do
     flagExistent <- get_PlayerPuyoExistent state
     if flagExistent
@@ -160,7 +160,7 @@ drop_fieldPuyo gs state =  do
 --------------------------------------------------------------------------------
 --  ErasePhase      ぷよの消滅
 --------------------------------------------------------------------------------
-erase_fieldPuyo             :: V.GameState -> PlayerState -> IO()
+erase_fieldPuyo             :: Setting -> PlayerState -> IO()
 erase_fieldPuyo gs state    =  do
     flagErase   <- E.erase_puyo gs state
     if flagErase
@@ -168,14 +168,14 @@ erase_fieldPuyo gs state    =  do
                     $ Phase.Animation Time.animeErase Phase.Erase'
       else shift_gamePhase state Phase.Fall
 
-erase_fieldPuyo'            :: V.GameState -> PlayerState -> IO()
+erase_fieldPuyo'            :: Setting -> PlayerState -> IO()
 erase_fieldPuyo' gs state   =  E.rewriteSpase_puyo gs state
                                >> shift_gamePhase state Phase.Drop
 
 --------------------------------------------------------------------------------
 --  FallPhase       おじゃまぷよの落下
 --------------------------------------------------------------------------------
-fall_ojamaPuyo  :: V.GameState -> PlayerState -> IO()
+fall_ojamaPuyo  :: Setting -> PlayerState -> IO()
 fall_ojamaPuyo gs state =  do
     F.moveYokokuPuyo gs state
     ojama   <- get_yokoku trt state
@@ -185,7 +185,7 @@ fall_ojamaPuyo gs state =  do
   where
     trt = Identity.territory $ get_playerIdentity state
     
-fall_ojamaPuyo' :: V.GameState -> PlayerState -> IO()
+fall_ojamaPuyo' :: Setting -> PlayerState -> IO()
 fall_ojamaPuyo' gs state =  do
     flagOjama   <- F.putOjamaPuyo gs state
     if flagOjama
@@ -204,6 +204,6 @@ fall_ojamaPuyo' gs state =  do
 --------------------------------------------------------------------------------
 --  GameoverPhase   ゲームオーバー時処理
 --------------------------------------------------------------------------------
-gameover            :: V.GameState -> PlayerState -> IO()
+gameover            :: Setting -> PlayerState -> IO()
 gameover gs state   =  do
     return ()

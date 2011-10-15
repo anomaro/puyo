@@ -10,9 +10,6 @@ import Control.Applicative
 import qualified Control.Monad      as MND
 
 import Standardizable
-
-import qualified State.Setting      as V 
-
 import State.Player.DataType
 import State.Player.Query   (
     get_fieldStateArea,
@@ -26,10 +23,10 @@ import State.Player.Overwriting (
     remove_playerPuyo,
     renew_fieldArea,
     )  
-
 import qualified Common.Area            as Area
 import qualified Common.Direction       as Direction
 import qualified Common.Field           as Field
+import State.Setting (Setting)
 
 --------------------------------------------------------------------------------
 -- ‘€ì‚Õ‚æ‚Ì’…’n
@@ -63,7 +60,7 @@ land_puyo state =  do
 --------------------------------------------------------------------------------
 -- ‚¿‚¬‚è—Ž‰º
 --------------------------------------------------------------------------------
-drop_puyo           :: V.GameState -> PlayerState -> IO Bool
+drop_puyo           :: Setting -> PlayerState -> IO Bool
 drop_puyo gs state  =
     MND.foldM fff False fieldArray_indices
   where

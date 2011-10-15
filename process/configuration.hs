@@ -5,7 +5,7 @@ module Process.Configuration
 import Data.Maybe
 
 import qualified Input      as I
-import qualified State.Setting   as V
+import qualified State.Setting   as Setting (renew)
 import qualified Stage      as S
 import qualified State.Result   as D
 
@@ -30,7 +30,7 @@ convertConfigurationPhase' bs stage@(S.Configuration gs sl SelectPhase)
   where
     nextPhase   = defaultConfigAnimePhase
     retCon a b c    = return $ S.Configuration a b c 
-    gs' f   | isJust sl'    = V.newGameState f (fromJust $ sl') gs
+    gs' f   | isJust sl'    = Setting.renew f (fromJust $ sl') gs
             | otherwise     = gs
     sl'     = toGameStateIndex sl
 convertConfigurationPhase' bs (S.Configuration gs sl (AnimationPhase 0))    =
