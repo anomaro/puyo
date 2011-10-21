@@ -12,15 +12,15 @@ import State.Player.DataType
 import State.Player.Query
 import State.Player.Overwriting
 import Standardizable
-import qualified Common.PlayerIdentity  as Identity (against, territory)
-import qualified Common.Area            as Area
-import qualified Common.Direction       as Direction
-import qualified Common.Score           as Score
-import Common.Color (Color)
-import qualified Common.Field           as Field
-import qualified Common.Yokoku          as Yokoku (add)
-import qualified Common.Number          as Number
-import qualified State.Setting          as Setting
+import qualified Data.PlayerIdentity  as Identity (against, territory)
+import qualified Data.Area            as Area
+import qualified Data.Direction       as Direction
+import qualified Data.Score           as Score
+import Data.Color (Color)
+import qualified Data.Field           as Field
+import qualified Data.Yokoku          as Yokoku (add)
+import qualified Data.Number          as Number
+import qualified Data.Setting          as Setting
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-module State.Setting
+module Data.Setting
 ( Setting
 , Item (..)
 , Value
@@ -16,9 +16,9 @@ module State.Setting
 -- 色数・ぷよの消える数・おじゃまぷよレートなどなど。。。
 import qualified Data.Vector.Unboxed    as VCU
 
-import qualified Common.Number          as Number
-import qualified Common.Color           as Color
-import qualified Common.Random          as Random (run)
+import qualified Data.Number          as Number
+import qualified Data.Color           as Color
+import qualified Data.Random          as Random (run)
 
 --------------------------------------------------------------------------------
 --  型

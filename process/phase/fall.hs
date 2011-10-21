@@ -16,13 +16,13 @@ import State.Player.Overwriting (
     renew_fieldArea,
     renewYokoku,
     )
-import qualified Common.PlayerIdentity  as Identity (against, territory)
-import qualified Common.Area            as Area
-import qualified Common.Direction       as Direction
-import qualified Common.Field           as Field
-import qualified Common.Random          as Random (run)
-import qualified Common.Yokoku          as Yokoku
-import qualified State.Setting          as Setting
+import qualified Data.PlayerIdentity  as Identity (against, territory)
+import qualified Data.Area            as Area
+import qualified Data.Direction       as Direction
+import qualified Data.Field           as Field
+import qualified Data.Random          as Random (run)
+import qualified Data.Yokoku          as Yokoku
+import qualified Data.Setting          as Setting
 
 --------------------------------------------------------------------------------
 --  

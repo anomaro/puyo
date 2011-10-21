@@ -7,12 +7,12 @@ module Process.Game
 import Data.Maybe       (isJust)
 import Control.Monad    (when)
 
-import qualified Common.PlayerIdentity  as Identity
-import qualified Common.Direction       as Direction
-import qualified Common.Time            as Time
-import qualified Common.Score           as Score
-import qualified Common.Phase           as Phase
-import State.Setting (Setting)
+import qualified Data.PlayerIdentity  as Identity
+import qualified Data.Direction       as Direction
+import qualified Data.Time            as Time
+import qualified Data.Score           as Score
+import qualified Data.Phase           as Phase
+import Data.Setting (Setting)
 import qualified Input                  as I
 import qualified Process.Phase.Build    as B
 import qualified Process.Phase.Control  as C

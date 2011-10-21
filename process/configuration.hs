@@ -1,15 +1,13 @@
--- configuration.hs
 module Process.Configuration
     where
 
 import Data.Maybe
 
 import qualified Input      as I
-import qualified State.Setting   as Setting (renew)
+import qualified Data.Setting   as Setting (renew)
 import qualified Stage      as S
-import qualified State.Result   as D
-
-import State.Configuration
+import qualified Data.Result   as Result (initial)
+import Data.Configuration
 
 --------------------------------------------------------------------------------
 --  ƒL[“ü—Í‰ðŽß
@@ -21,7 +19,7 @@ convertConfigurationPhase bs stage  = do
 
 convertConfigurationPhase'  :: [I.Button] -> S.GameStage -> IO S.GameStage
 convertConfigurationPhase' bs stage@(S.Configuration gs sl SelectPhase)
-  | elem I.one_button   bs  = S.createGameStage gs D.initialGameDataCollection
+  | elem I.one_button   bs  = S.createGameStage gs Result.initial
   | elem I.up_button    bs  = retCon gs (predSelection sl) nextPhase
   | elem I.down_button  bs  = retCon gs (succSelection sl) nextPhase
   | elem I.right_button bs  = retCon (gs' succ) sl nextPhase

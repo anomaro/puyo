@@ -1,4 +1,4 @@
-module Common.Area
+module Data.Area
 ( Area
 , color
 , anime
@@ -45,12 +45,12 @@ import Data.Maybe (fromJust)
 
 import Standardizable
 
-import qualified State.Setting  as V
+import qualified Data.Setting  as V
 
-import qualified Common.Direction   as Direction
-import qualified Common.Time        as Time
-import Common.Color (Color)
-import qualified Common.Field           as Field
+import qualified Data.Direction   as Direction
+import qualified Data.Time        as Time
+import Data.Color (Color)
+import qualified Data.Field           as Field
 
 --------------------------------------------------------------------------------
 --  Œ^

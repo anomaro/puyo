@@ -48,18 +48,18 @@ import Control.Applicative
 import qualified Data.IORef         as IORF
 import qualified Data.Array.IO      as AIO
 
-import qualified State.Setting          as Setting
-import qualified Common.PlayerIdentity  as Identity
-import qualified Common.Area            as Area
-import qualified Common.Direction       as Direction
-import Common.Time  (Time)
-import qualified Common.Score           as Score
-import Common.Color (Color, determine)
-import qualified Common.Field           as Field
-import qualified Common.Random          as Random (run, list)
-import qualified Common.Yokoku          as Yokoku
-import qualified Common.Number          as Number
-import qualified Common.Phase           as Phase (Game, start)
+import qualified Data.Setting          as Setting
+import qualified Data.PlayerIdentity  as Identity
+import qualified Data.Area            as Area
+import qualified Data.Direction       as Direction
+import Data.Time  (Time)
+import qualified Data.Score           as Score
+import Data.Color (Color, determine)
+import qualified Data.Field           as Field
+import qualified Data.Random          as Random (run, list)
+import qualified Data.Yokoku          as Yokoku
+import qualified Data.Number          as Number
+import qualified Data.Phase           as Phase (Game, start)
 
 --------------------------------------------------------------------------------
 (<$<) :: Functor f => (a -> b) -> (c -> f a) -> (c -> f b)
@@ -74,15 +74,15 @@ readField   =  flip AIO.readArray
 --------------------------------------------------------------------------------
 -- プレイヤー識別を伝える。
 get_playerIdentity  :: P'.PlayerState -> Identity.PlayerIdentity
-get_playerIdentity  =  P'.takeout_playerIdentity
+get_playerIdentity  =  P'.identity
 
 -- ゲーム状態を伝える。
 get_gamePhase   :: P'.PlayerState -> IO Phase.Game
-get_gamePhase   =  IORF.readIORef <=< P'.takeout_gamePhaseState
+get_gamePhase   =  IORF.readIORef . P'.phase
 
 -- ネクストぷよの色を伝える。
 get_nextPuyoColors  :: P'.PlayerState -> IO [Color]
-get_nextPuyoColors  =  IORF.readIORef <=< P'.takeout_nextPuyoState
+get_nextPuyoColors  =  IORF.readIORef . P'.nexts
 
 --------------------------------------------------------------------------------
 --  敗北フラグ
@@ -90,7 +90,7 @@ get_nextPuyoColors  =  IORF.readIORef <=< P'.takeout_nextPuyoState
 -- 勝利したプレイヤーを調べる。
 get_whoWins         :: P'.PlayerState -> IO (Maybe Identity.Territory)
 get_whoWins state   =  do
-    loseFlag    <- IORF.readIORef $ P'.takeout_loseFlagState state
+    loseFlag    <- IORF.readIORef $ P'.loseFlag state
     return $ check loseFlag
   where
     check (False, True)     = Just Identity.Left
@@ -103,13 +103,13 @@ get_whoWins state   =  do
 -- 実際に降るおじゃまぷよの数を伝える。
 get_fallOjamaPuyo   :: Identity.Territory -> P'.PlayerState -> IO Number.Puyo
 get_fallOjamaPuyo trt state = do
-    yokokuField <- IORF.readIORef $ P'.takeout_yokokuState state
+    yokokuField <- IORF.readIORef $ P'.yokoku state
     return $ Yokoku.actual $ (Identity.pick trt) yokokuField
 
 -- 予告ぷよの数を伝える。
 get_yokoku  :: Identity.Territory -> P'.PlayerState -> IO Number.Puyo
 get_yokoku trt state =  do
-    yokokuField <- IORF.readIORef $ P'.takeout_yokokuState state
+    yokokuField <- IORF.readIORef $ P'.yokoku state
     return $ Yokoku.total $ (Identity.pick trt) yokokuField
     
 --------------------------------------------------------------------------------
@@ -117,62 +117,53 @@ get_yokoku trt state =  do
 --------------------------------------------------------------------------------
 -- 得点を伝える。
 get_score       :: P'.PlayerState -> IO Score.Score
-get_score       =  IORF.readIORef . P'.takeout_scoreState
+get_score       =  IORF.readIORef . P'.score
 
 --------------------------------------------------------------------------------
 --  フィールドの状態取得
 --------------------------------------------------------------------------------
 -- 指定したエリアのフィールドのオブジェクトの種類を伝える。
 get_fieldStateArea      :: Field.Position -> P'.PlayerState -> IO Area.Area
-get_fieldStateArea p    =  readField p <=< P'.takeout_fieldstate
+get_fieldStateArea p    =  readField p . P'.field
                              
 -- 指定した方向に隣接するエリアのオブジェクトが、空白かどうか判定。
 is_neighborSpace :: Field.Position -> Direction.Area -> P'.PlayerState -> IO Bool
 is_neighborSpace p d =
-    Area.isSpace <$< readField (Field.neighbor d p) <=< P'.takeout_fieldstate
+    Area.isSpace <$< readField (Field.neighbor d p) . P'.field
 
 --------------------------------------------------------------------------------
 --  操作ぷよの状態取得
 --------------------------------------------------------------------------------
+readTakePP :: P'.PlayerState -> IO P'.PlayerPuyo
+readTakePP =  IORF.readIORef . P'.playerPuyo
+
 -- 操作ぷよが存在するかどうか伝える。
-get_PlayerPuyoExistent  :: P'.PlayerState -> IO Bool
-get_PlayerPuyoExistent  =  (P'.NonExistent /=) <$< readTakePP
+get_PlayerPuyoExistent      :: P'.PlayerState -> IO Bool
+get_PlayerPuyoExistent      =  (P'.NonExistent /=) <$< readTakePP
 
 -- 操作ぷよの色の組みを伝える。
 get_PlayerPuyoColors        :: P'.PlayerState -> IO (Color, Color)
-get_PlayerPuyoColors        =  getPPColor           <$< readTakePP
+get_PlayerPuyoColors        =  P'.colors        <$< readTakePP
 
 -- 操作ぷよの基点ぷよのフィールド座標を伝える。
 get_PlayerPuyoPosition      :: P'.PlayerState -> IO Field.Position
-get_PlayerPuyoPosition      =  getPPPosition        <$< readTakePP
+get_PlayerPuyoPosition      =  P'.position      <$< readTakePP
 
 -- 操作ぷよの動点ぷよの方向を伝える。
 get_PlayerPuyoDirection     :: P'.PlayerState -> IO Direction.Area
-get_PlayerPuyoDirection     =  getPPDirection       <$< readTakePP
+get_PlayerPuyoDirection     =  P'.direction     <$< readTakePP
 
 -- 操作ぷよの自然落下用のカウンタを伝える。
 get_PlayerPuyoFallTime      :: P'.PlayerState -> IO Time
-get_PlayerPuyoFallTime      =  getPPFallTime        <$< readTakePP
+get_PlayerPuyoFallTime      =  P'.fallTime      <$< readTakePP
 
 -- 操作ぷよの回転用のカウンタを伝える。
 get_PlayerPuyoRotateTime    :: P'.PlayerState -> IO Time
-get_PlayerPuyoRotateTime    =  getPPRotateTime      <$< readTakePP
+get_PlayerPuyoRotateTime    =  P'.rotateTime    <$< readTakePP
 
 -- 操作ぷよのクイックターンの可否を伝える。
 get_PlayerPuyoQuickTurnFlag :: P'.PlayerState -> IO Bool
-get_PlayerPuyoQuickTurnFlag =  getPPFlagQuickTurn   <$< readTakePP
-
-
-readTakePP :: P'.PlayerState -> IO P'.PlayerPuyo
-readTakePP =  IORF.readIORef <=< P'.takeout_ppuyostate
-
-getPPColor          (P'.PlayerPuyoInfo c _ _ _ _ _)    = c :: (Color, Color)
-getPPPosition       (P'.PlayerPuyoInfo _ p _ _ _ _)    = p :: Field.Position
-getPPDirection      (P'.PlayerPuyoInfo _ _ d _ _ _)    = d :: Direction.Area
-getPPFallTime       (P'.PlayerPuyoInfo _ _ _ f _ _)    = f :: Time
-getPPRotateTime     (P'.PlayerPuyoInfo _ _ _ _ r _)    = r :: Time
-getPPFlagQuickTurn  (P'.PlayerPuyoInfo _ _ _ _ _ q)    = q :: Bool
-
+get_PlayerPuyoQuickTurnFlag =  P'.quickFlag     <$< readTakePP
 
 --------------------------------------------------------------------------------
 --  プレイヤー状態初期化

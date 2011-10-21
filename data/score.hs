@@ -1,4 +1,4 @@
-module Common.Score
+module Data.Score
 ( Score
 , initial
 , refresh
@@ -13,8 +13,8 @@ module Common.Score
 import Data.List (nub)
 import Control.Monad.Instances
 
-import qualified Common.Number          as Number
-import Common.Color (Color)
+import qualified Data.Number          as Number
+import Data.Color (Color)
 
 --------------------------------------------------------------------------------
 --  Œ^

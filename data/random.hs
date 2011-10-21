@@ -1,4 +1,4 @@
-module Common.Random
+module Data.Random
 ( run
 , list
 ) where

@@ -1,11 +1,11 @@
 -- configuration.hs
-module State.Configuration
+module Data.Configuration
 where
 
 import Data.Maybe (isJust, fromJust)
 
-import qualified State.Setting      as Setting (Item (..), Setting, get)
-import qualified Common.Time        as Time (Time, inputConfig)
+import qualified Data.Setting      as Setting (Item (..), Setting, get)
+import qualified Data.Time        as Time (Time, inputConfig)
 
 --------------------------------------------------------------------------------
 --  Œ^

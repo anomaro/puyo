@@ -22,8 +22,8 @@ module Render.Object
 
 import qualified Graphics.UI.GLUT   as GLUT
 
-import qualified Common.Direction   as Direction
-import qualified Common.Color       as Color (Color, inGLUT)
+import qualified Data.Direction   as Direction
+import qualified Data.Color       as Color (Color, inGLUT)
 import qualified Render.Common      as W (window_sizeY, window_sizeX)
 
 --------------------------------------------------------------------------------

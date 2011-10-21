@@ -20,12 +20,12 @@ import qualified Input          as I (
     putOut_key,
     )
 import qualified Stage          as S
-import qualified State.Result   as D
+import qualified Data.Result   as D
 import qualified State.Player.DataType  as P
 import qualified State.Player.Query     as Q
 import qualified Process.Configuration  as C
-import qualified Common.Time            as Time (frameRate)
-import qualified State.Setting          as Setting (initial)
+import qualified Data.Time            as Time (frameRate)
+import qualified Data.Setting          as Setting (initial)
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

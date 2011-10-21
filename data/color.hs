@@ -1,4 +1,4 @@
-module Common.Color
+module Data.Color
 ( Color
 , ColorAssortment
 , maxNumber
@@ -12,7 +12,7 @@ import Data.List
 import qualified Data.Vector            as Vector
 import qualified Graphics.UI.GLUT       as GLUT (Color3 (Color3))
 
-import qualified Common.Number          as Number
+import qualified Data.Number          as Number
 --------------------------------------------------------------------------------
 --  Œ^
 --------------------------------------------------------------------------------

@@ -1,8 +1,8 @@
-module Common.Field
+module Data.Field
 where
 
-import qualified Common.Direction       as Direction
-import qualified State.Setting          as Setting
+import qualified Data.Direction       as Direction
+import qualified Data.Setting          as Setting
 
 --------------------------------------------------------------------------------
 --  Œ^

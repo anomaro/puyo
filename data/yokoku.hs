@@ -1,13 +1,21 @@
-module Common.Yokoku
+module Data.Yokoku
 where
 
-import qualified Common.Number          as Number
-import qualified State.Setting          as Setting
-import qualified Common.Field           as Field (sizeYyokokuLv3)
+import qualified Data.Number          as Number
+import qualified Data.Setting          as Setting
+import qualified Data.Field           as Field (sizeYyokokuLv3)
 
 --------------------------------------------------------------------------------
 --  Œ^
 --------------------------------------------------------------------------------
+data Kind   = Syo       -- ¬
+            | Chu       -- ’†
+            | Inseki    -- è¦Î
+            | Hoshi     -- ¯
+            | Tsuki     -- ŒŽ
+            | Oukan     -- ‰¤Š¥
+            deriving (Show, Eq, Ord, Enum)
+
 type Shelf      = ( Fall Number.Puyo
                   , Fixed  Number.Puyo
                   , Progress Number.Puyo
@@ -35,7 +43,7 @@ instance Functor Progress  where
 initial  =  (Fall 0, Fixed 0, Progress 0)    :: Shelf
 
 -- è¦Î‚Õ‚æ‚ª‚à‚½‚ç‚·‚¨‚¶‚á‚Ü‚Õ‚æ‚Ì—ÊB
-insekiVolume gs = ojamaVolume 3 gs
+insekiVolume gs = ojamaVolume Inseki gs
 
 --------------------------------------------------------------------------------
 --  ŠÖ”
@@ -69,12 +77,12 @@ reset (a, Fixed b, c)    =  (a, Fixed (b + 1), c)
 --------------------------------------------------------------------------------
 --  —Ê
 --------------------------------------------------------------------------------
-ojamaVolume                         :: Int -> Setting.Setting -> Number.Puyo
-ojamaVolume 1 _                     =  1
-ojamaVolume 2 gs | rankSize gs > 1  =  ojamaVolume 1 gs * rankSize gs
-ojamaVolume 3 gs | rankSize gs > 1  =  ojamaVolume 2 gs * Field.sizeYyokokuLv3
-ojamaVolume 4 gs | rankSize gs > 1  =  ojamaVolume 3 gs * rankSize gs
-ojamaVolume n gs | rankSize gs > 1  =  ojamaVolume (n - 1) gs * 2
-ojamaVolume n _                     =  n
+ojamaVolume :: Kind -> Setting.Setting -> Number.Puyo
+ojamaVolume Syo    _                     = 1
+ojamaVolume Chu    gs | rankSize gs > 1  = rankSize gs
+ojamaVolume Inseki gs | rankSize gs > 1  = ojamaVolume Chu gs * Field.sizeYyokokuLv3
+ojamaVolume Hoshi  gs | rankSize gs > 1  = ojamaVolume Inseki gs * rankSize gs
+ojamaVolume k      gs | rankSize gs > 1  = ojamaVolume (pred k) gs * 2
+ojamaVolume k      _                     = fromEnum k + 1
 
 rankSize gs    = Setting.get Setting.FieldSizeX gs

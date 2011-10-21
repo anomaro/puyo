@@ -1,4 +1,4 @@
-module Common.Direction
+module Data.Direction
 ( Area(..)
 , Rotation(..)
 

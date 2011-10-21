@@ -1,15 +1,11 @@
--- file: render.hs
 module Render.Game
-( render_gameField        -- ゲームの描画
+( render_gameField
 ) where
 
+import qualified Graphics.UI.GLUT   as GLUT
 import Control.Monad
 import Control.Applicative
 
-import qualified Graphics.UI.GLUT   as GLUT
-import qualified Control.Monad      as MND
-
-import qualified State.Result   as D
 import State.Player.DataType
 import State.Player.Query   (
     get_playerIdentity,
@@ -28,24 +24,23 @@ import State.Player.Query   (
 import State.Player.Overwriting (
     renew_animationType,
     )
-
-import qualified Common.PlayerIdentity  as Identity
-import qualified Common.Area            as Area
-import qualified Common.Direction       as Direction
-import qualified Common.Time            as Time (Time, animeRotate)
-import qualified Common.Score           as Score
-import Common.Color (Color)
-import qualified Common.Field           as Field
-import qualified Common.Number          as Number
-import qualified Common.Yokoku          as Yokoku (ojamaVolume)
-import qualified State.Setting          as Setting
-
+import qualified Data.PlayerIdentity    as Identity
+import qualified Data.Area              as Area
+import qualified Data.Direction         as Direction
+import qualified Data.Time              as Time (Time, animeRotate)
+import qualified Data.Score             as Score
+import Data.Color (Color)
+import qualified Data.Field             as Field
+import qualified Data.Number            as Number
+import qualified Data.Yokoku            as Yokoku (ojamaVolume)
+import qualified Data.Setting           as Setting
+import qualified Data.Result            as Result (Collection, wins)
 import Render.Object
 
 --------------------------------------------------------------------------------
 --  ゲームの描画
 --------------------------------------------------------------------------------
-render_gameField :: Setting.Setting -> PlayerState -> D.GameDataCollection -> IO()
+render_gameField :: Setting.Setting -> PlayerState -> Result.Collection -> IO()
 render_gameField gs state gdc   =  do
     render_backfield                        gs state     -- フィールド背景の描画
     render_field                            gs state     -- フィールドの描画
@@ -58,7 +53,7 @@ render_gameField gs state gdc   =  do
 
 -- プレイヤー操作ぷよが存在するかどうかチェックしてからアクションを実行する。
 checkExistent         :: PlayerState -> IO() -> IO()
-checkExistent state a =  get_PlayerPuyoExistent state >>= \b  -> MND.when b a
+checkExistent state a =  get_PlayerPuyoExistent state >>= \b  -> when b a
 --------------------------------------------------------------------------------
 --  基本描画設定
 --------------------------------------------------------------------------------
@@ -92,7 +87,7 @@ field_pointX trt gs = Identity.pick trt (l, r)
 --------------------------------------------------------------------------------
 --  勝利数描画   
 --------------------------------------------------------------------------------
-render_wins :: Setting.Setting -> PlayerState -> D.GameDataCollection -> IO()
+render_wins :: Setting.Setting -> PlayerState -> Result.Collection -> IO()
 render_wins gs state gdc    =  do
     GLUT.lineWidth GLUT.$= 2.0
     GLUT.color (GLUT.Color3 1.0 1.0 1.0 :: GLUT.Color3 Double)
@@ -104,7 +99,7 @@ render_wins gs state gdc    =  do
     scale       = 0.001
     objWins     = GLUT.renderString GLUT.Roman $ show wins
       where
-        wins    = Identity.pick trt $ D.getWins gdc
+        wins    = Identity.pick trt $ Result.wins gdc
 
 --------------------------------------------------------------------------------
 --  予告ぷよ描画    
@@ -129,17 +124,18 @@ yokokuKinds' n gs   = yokokuKinds n 0 gs []
                 -> [GameObject]
     yokokuKinds 0 x gs objs = objs
     yokokuKinds n x gs objs
-     | x == fieldSizeX  = objs
-     | n >= level 6     = yokokuKinds (n - level 6) x' gs (objYokokuLv6 : objs)
-     | n >= level 5     = yokokuKinds (n - level 5) x' gs (objYokokuLv5 : objs)
-     | n >= level 4     = yokokuKinds (n - level 4) x' gs (objYokokuLv4 : objs)
-     | n >= level 3     = yokokuKinds (n - level 3) x' gs (objYokokuLv3 : objs)
-     | n >= level 2     = yokokuKinds (n - level 2) x' gs (objYokokuLv2 : objs)
-     | otherwise        = yokokuKinds (n - level 1) x' gs (objYokokuLv1 : objs)
+     | x == fieldSizeX = objs
+     | n >= volume 6   = yokokuKinds (n - volume 6) x' gs (objYokokuLv6 : objs)
+     | n >= volume 5   = yokokuKinds (n - volume 5) x' gs (objYokokuLv5 : objs)
+     | n >= volume 4   = yokokuKinds (n - volume 4) x' gs (objYokokuLv4 : objs)
+     | n >= volume 3   = yokokuKinds (n - volume 3) x' gs (objYokokuLv3 : objs)
+     | n >= volume 2   = yokokuKinds (n - volume 2) x' gs (objYokokuLv2 : objs)
+     | otherwise       = yokokuKinds (n - volume 1) x' gs (objYokokuLv1 : objs)
       where
         fieldSizeX  = Setting.get Setting.FieldSizeX gs
         x'  = x + 1
-        level n = Yokoku.ojamaVolume n gs
+        volume n = Yokoku.ojamaVolume (toEnum $ n + 1) gs
+
 --------------------------------------------------------------------------------
 --  得点描画    
 --------------------------------------------------------------------------------
@@ -262,7 +258,7 @@ rotateGap gs direction rotateTime  =
 --  フィールド背景描画
 --------------------------------------------------------------------------------
 render_backfield            :: Setting.Setting -> PlayerState -> IO()
-render_backfield gs state   =  MND.mapM_ f $ Field.arrayIndices gs
+render_backfield gs state   =  mapM_ f $ Field.arrayIndices gs
   where
     trt = Identity.territory $ get_playerIdentity state
     f p = render_fieldObject gs trt p objBackfield
@@ -272,7 +268,7 @@ render_backfield gs state   =  MND.mapM_ f $ Field.arrayIndices gs
 --------------------------------------------------------------------------------
 -- フィールドを描画
 render_field            :: Setting.Setting -> PlayerState -> IO()
-render_field gs state   =  MND.mapM_ f $ Field.arrayIndices gs
+render_field gs state   =  mapM_ f $ Field.arrayIndices gs
   where
     f p =  renew_animationType state p         -- アニメーション状態の更新。 
            >> (matching =<< get_fieldStateArea p state)
@@ -291,7 +287,7 @@ neighborSameColorPuyo           :: Area.Area -> Field.Position -> PlayerState
                                 -> IO[Direction.Area]
 neighborSameColorPuyo area p state
   | not (Area.isLink area) = return []
-  | otherwise              = MND.foldM ffff [] Direction.areas
+  | otherwise              = foldM ffff [] Direction.areas
   where
     ffff    :: [Direction.Area] -> Direction.Area -> IO[Direction.Area]
     ffff acc d  =  do

@@ -1,7 +1,7 @@
-module Common.Phase
+module Data.Phase
 where
 
-import Common.Time  (Time)
+import Data.Time  (Time)
 
 --------------------------------------------------------------------------------
 --  Œ^

@@ -19,13 +19,13 @@ import State.Player.Overwriting (
     renewScore,
     renewLoseFlag,
     )
-import State.Setting (Setting)
-import qualified Common.PlayerIdentity  as Identity
-import qualified Common.Area            as Area  (isPuyo)
-import qualified Common.Direction       as Direction
-import qualified Common.Score           as Score (refresh)
-import Common.Color (Color)
-import qualified Common.Field           as Field
+import Data.Setting (Setting)
+import qualified Data.PlayerIdentity  as Identity
+import qualified Data.Area            as Area  (isPuyo)
+import qualified Data.Direction       as Direction
+import qualified Data.Score           as Score (refresh)
+import Data.Color (Color)
+import qualified Data.Field           as Field
 
 --------------------------------------------------------------------------------
 --  ëÄçÏÇ’ÇÊÇê∂ê¨

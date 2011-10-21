@@ -23,10 +23,10 @@ import State.Player.Overwriting (
     remove_playerPuyo,
     renew_fieldArea,
     )  
-import qualified Common.Area            as Area
-import qualified Common.Direction       as Direction
-import qualified Common.Field           as Field
-import State.Setting (Setting)
+import qualified Data.Area            as Area
+import qualified Data.Direction       as Direction
+import qualified Data.Field           as Field
+import Data.Setting (Setting)
 
 --------------------------------------------------------------------------------
 -- ëÄçÏÇ’ÇÊÇÃíÖín

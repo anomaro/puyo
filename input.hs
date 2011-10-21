@@ -27,7 +27,7 @@ import qualified Data.IORef         as IORF
 import qualified Graphics.UI.GLUT   as GLUT
 import Data.List (nub, (\\))
 
-import qualified Common.Time        as Time (Time, inputMoveX, count)
+import qualified Data.Time        as Time (Time, inputMoveX, count)
 
 --------------------------------------------------------------------------------
 --  É{É^ÉìÇÃèÛë‘

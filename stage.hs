@@ -3,17 +3,16 @@ where
 
 import qualified State.Player.DataType  as P
 import qualified State.Player.Query     as Q 
-import qualified State.Configuration    as CT
-import qualified State.Result           as D
-
-import State.Setting (Setting)
-import qualified Common.PlayerIdentity  as Identity
+import qualified Data.Configuration    as CT
+import qualified Data.Result           as Result (Collection)
+import Data.Setting (Setting)
+import qualified Data.PlayerIdentity  as Identity
 
 --------------------------------------------------------------------------------
 --  ê–Ê
 --------------------------------------------------------------------------------
 data GameStage
-    = Game GameName Setting PlayerStates D.GameDataCollection
+    = Game GameName Setting PlayerStates Result.Collection
     | Configuration Setting CT.Selection CT.ConfiguPhase
 
 data GameName   = Puyopuyo  -- ’Êí‚Ì‚Õ‚æ‚Õ‚æ
@@ -23,7 +22,7 @@ type PlayerStates   = (P.PlayerState, P.PlayerState)
 --------------------------------------------------------------------------------
 --  ê–Êì¬
 --------------------------------------------------------------------------------
-createGameStage         :: Setting -> D.GameDataCollection -> IO GameStage
+createGameStage         :: Setting -> Result.Collection -> IO GameStage
 createGameStage gs gdc  =  do
     n1P         <- Q.create_nextPuyoState gs
     n2P         <- Q.copy_nextPuyoState n1P

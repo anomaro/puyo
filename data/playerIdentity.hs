@@ -1,16 +1,14 @@
-module Common.PlayerIdentity
-( 
-  PlayerIdentity(..),
-  Territory(..),
-  Player(..),
-  ComName(..),
-  defaultUser1P,
-  defaultUser2P,
-  against,
-  apply,
-  pick,
-)
-where
+module Data.PlayerIdentity
+( PlayerIdentity(..)
+, Territory(..)
+, Player(..)
+, ComName(..)
+, defaultUser1P
+, defaultUser2P
+, against
+, apply
+, pick
+) where
 
 import Prelude hiding (Left, Right)
 import Data.Graph.Inductive.Query.Monad (mapFst, mapSnd)
