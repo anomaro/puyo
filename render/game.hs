@@ -32,7 +32,7 @@ import qualified Data.Score             as Score
 import Data.Color (Color)
 import qualified Data.Field             as Field
 import qualified Data.Number            as Number
-import qualified Data.Yokoku            as Yokoku (ojamaVolume)
+import qualified Data.Yokoku            as Yokoku (view)
 import qualified Data.Setting           as Setting
 import qualified Data.Result            as Result (Collection, wins)
 import Render.Object
@@ -107,34 +107,12 @@ render_wins gs state gdc    =  do
 render_yokoku           :: Setting.Setting -> PlayerState -> IO()
 render_yokoku gs state  =  do
     numOfOjama  <- get_yokoku trt state
-    zipWithM_ f targetArea $ objs numOfOjama
+    zipWithM_ f renderPositions (Yokoku.view numOfOjama gs)
   where
-    targetArea  = [(Field.hidingBottomRank, x + 1) | x <- targetPosX]
-    targetPosX  = [1..fieldSizeX]
-    fieldSizeX  = Setting.get Setting.FieldSizeX gs
-    objs n      = reverse $ yokokuKinds' n gs
     trt         = Identity.territory $ get_playerIdentity state
-    f p o   = render_fieldObject' gs trt p 0 0 1 1 0 o
-
--- —\‚Õ‚æ‚Ì•\Ž¦‚·‚éŽí—Þ‚ðŒˆ‚ß‚éB
-yokokuKinds'    :: Number.Puyo -> Setting.Setting -> [GameObject]
-yokokuKinds' n gs   = yokokuKinds n 0 gs []
-  where
-    yokokuKinds :: Number.Puyo -> Field.Line -> Setting.Setting -> [GameObject]
-                -> [GameObject]
-    yokokuKinds 0 x gs objs = objs
-    yokokuKinds n x gs objs
-     | x == fieldSizeX = objs
-     | n >= volume 6   = yokokuKinds (n - volume 6) x' gs (objYokokuLv6 : objs)
-     | n >= volume 5   = yokokuKinds (n - volume 5) x' gs (objYokokuLv5 : objs)
-     | n >= volume 4   = yokokuKinds (n - volume 4) x' gs (objYokokuLv4 : objs)
-     | n >= volume 3   = yokokuKinds (n - volume 3) x' gs (objYokokuLv3 : objs)
-     | n >= volume 2   = yokokuKinds (n - volume 2) x' gs (objYokokuLv2 : objs)
-     | otherwise       = yokokuKinds (n - volume 1) x' gs (objYokokuLv1 : objs)
-      where
-        fieldSizeX  = Setting.get Setting.FieldSizeX gs
-        x'  = x + 1
-        volume n = Yokoku.ojamaVolume (toEnum $ n + 1) gs
+    f p k   = render_fieldObject' gs trt p 0 0 1 1 0 (yokoku k)
+    renderPositions  = [(Field.hidingBottomRank, x + 1) | x <- [1..fieldSizeX]]
+    fieldSizeX  = Setting.get Setting.FieldSizeX gs
 
 --------------------------------------------------------------------------------
 --  “¾“_•`‰æ    

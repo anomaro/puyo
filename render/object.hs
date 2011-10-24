@@ -12,16 +12,12 @@ module Render.Object
 , objPuyo'
 , objBackfield
 , objFallPoint
-, objYokokuLv1
-, objYokokuLv2
-, objYokokuLv3
-, objYokokuLv4
-, objYokokuLv5
-, objYokokuLv6,
+, yokoku
 ) where
 
 import qualified Graphics.UI.GLUT   as GLUT
 
+import qualified Data.Yokoku        as Yokoku (Kind(..))
 import qualified Data.Direction   as Direction
 import qualified Data.Color       as Color (Color, inGLUT)
 import qualified Render.Common      as W (window_sizeY, window_sizeX)
@@ -152,6 +148,14 @@ objFallPoint color   =  do
     size = 0.2
     
 -- —\‚Õ‚æ
+yokoku                  :: Yokoku.Kind -> GameObject
+yokoku Yokoku.Syo       =  objYokokuLv1
+yokoku Yokoku.Chu       =  objYokokuLv2
+yokoku Yokoku.Inseki    =  objYokokuLv3
+yokoku Yokoku.Hoshi     =  objYokokuLv4
+yokoku Yokoku.Tsuki     =  objYokokuLv5
+yokoku Yokoku.Oukan     =  objYokokuLv6
+
 objYokokuLv1    :: GameObject
 objYokokuLv1    =  do
     GLUT.lineWidth GLUT.$= 2.0

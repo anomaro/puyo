@@ -1,9 +1,24 @@
 module Data.Yokoku
-where
+( Kind (..)
+, Shelf
+, initial
+, insekiVolume
+, actual
+, total
+, fixed
+, fall
+, add
+, exhale
+, reset
+, view
+) where
 
-import qualified Data.Number          as Number
-import qualified Data.Setting          as Setting
-import qualified Data.Field           as Field (sizeYyokokuLv3)
+import Data.List (find)
+import Data.Maybe (fromJust)
+
+import qualified Data.Number        as Number
+import qualified Data.Setting       as Setting
+import qualified Data.Field         as Field (sizeYyokokuLv3)
 
 --------------------------------------------------------------------------------
 --  Œ^
@@ -14,7 +29,7 @@ data Kind   = Syo       -- ¬
             | Hoshi     -- ¯
             | Tsuki     -- ŒŽ
             | Oukan     -- ‰¤Š¥
-            deriving (Show, Eq, Ord, Enum)
+            deriving (Show, Eq, Ord, Enum, Bounded)
 
 type Shelf      = ( Fall Number.Puyo
                   , Fixed  Number.Puyo
@@ -73,6 +88,20 @@ exhale n (Fall a, b, c) = (Fall (a - n), b, c)
 
 reset :: Shelf -> Shelf
 reset (a, Fixed b, c)    =  (a, Fixed (b + 1), c)
+
+--------------------------------------------------------------------------------
+--  Ží—Þ
+--------------------------------------------------------------------------------
+-- •\Ž¦‚·‚éŽí—Þ
+view        :: Number.Puyo -> Setting.Setting -> [Kind]
+view n s    =  view' n (Setting.get Setting.FieldSizeX s) s
+ where
+    view' 0 _ _   = []
+    view' _ 0 _   = []
+    view' n x s   = kind : view' (n - ojamaVolume kind s) (x - 1) s
+      where
+        kind    = fromJust $ find ((0 <=) . (n -) . (flip ojamaVolume) s) ks
+        ks      = [maxBound, pred maxBound .. minBound] :: [Kind]
 
 --------------------------------------------------------------------------------
 --  —Ê
