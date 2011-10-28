@@ -14,7 +14,7 @@ renderConfiguration         :: Setting -> Selection -> IO ()
 renderConfiguration gs sl   =  do
     GLUT.lineWidth GLUT.$= 3.0
     GLUT.color (GLUT.Color3 1.0 1.0 1.0 :: GLUT.Color3 Double)
-    renderTitle      "Configuration"
+    renderTitle "Configuration"
     mapM_ (renderEntry gs sl) listEntry
   where
     scaleTitle      = 0.002

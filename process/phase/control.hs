@@ -1,4 +1,3 @@
--- controlPhase.hs
 module Process.Phase.Control
 ( fallNatural_playerPuyo
 , fall_puyo
@@ -23,11 +22,11 @@ import State.Player.Overwriting (
     renew_playerPuyo,
     shift_gamePhase,
     )
-import qualified Data.Setting          as Setting
-import qualified Data.Direction       as Direction
-import qualified Data.Time            as Time (Time, animeRotate, count)
-import qualified Data.Field           as Field (neighbor)
-import qualified Data.Phase           as Phase (Game(Drop))
+import qualified Data.Setting       as Setting
+import qualified Data.Direction     as Direction
+import qualified Data.Time          as Time (Time, animeRotate, count)
+import qualified Data.Field         as Field (neighbor)
+import qualified Data.Phase         as Phase (Game(Drop))
 
 --------------------------------------------------------------------------------
 -- 自然落下処理。（移動した場合はTrueを返す。）

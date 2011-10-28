@@ -1,13 +1,9 @@
--- dropPhase.hs
 module Process.Phase.Drop
-    (
-    land_puyo,
-    drop_puyo,
-    )
-    where
+( land_puyo
+, drop_puyo
+) where
 
-import Control.Applicative
-import qualified Control.Monad      as MND
+import Control.Monad (when, foldM)
 
 import Standardizable
 import State.Player.DataType
@@ -34,7 +30,7 @@ import Data.Setting (Setting)
 land_puyo       :: PlayerState -> IO()
 land_puyo state =  do
     b <- get_PlayerPuyoExistent state
-    MND.when b $ add_playerpuyo >> remove_playerPuyo state
+    when b $ add_playerpuyo >> remove_playerPuyo state
   where
     -- 操作ぷよをフィールドの状態に加える。
     add_playerpuyo  :: IO()
@@ -45,24 +41,26 @@ land_puyo state =  do
         let pos'@(y',_) = Field.neighbor d pos
         boolb   <- is_neighborSpace pos  Direction.Down state
         boolm   <- is_neighborSpace pos' Direction.Down state
-        let (areaB, powerB) = Area.landPuyo cb pos d boolb
-            (areaM, powerM) = Area.landPuyo cm pos' (Direction.inversion d) boolm
+        let (areaB, pB) = Area.landPuyo cb pos d boolb
+            (areaM, pM) = Area.landPuyo cm pos' (Direction.inversion d) boolm
 
-        MND.when (y  >= Field.hidingBottomRank) $ renew_fieldArea state pos  areaB
-        MND.when (y' >= Field.hidingBottomRank) $ renew_fieldArea state pos' areaM
+        when (y  >= Field.hidingBottomRank) $ renew_fieldArea state pos  areaB
+        when (y' >= Field.hidingBottomRank) $ renew_fieldArea state pos' areaM
         
-        areaB'  <- get_fieldStateArea (Field.neighbor Direction.Down pos ) state
-        areaM'  <- get_fieldStateArea (Field.neighbor Direction.Down pos') state
+        areaB'  <- get_fieldStateArea (downArea pos ) state
+        areaM'  <- get_fieldStateArea (downArea pos') state
         
-        transmitAnimeLanding powerB areaB' (Field.neighbor Direction.Down pos ) state
-        transmitAnimeLanding powerM areaM' (Field.neighbor Direction.Down pos') state
+        transmitAnimeLanding pB areaB' (downArea pos ) state
+        transmitAnimeLanding pM areaM' (downArea pos') state
+      where
+        downArea = Field.neighbor Direction.Down
 
 --------------------------------------------------------------------------------
 -- ちぎり落下
 --------------------------------------------------------------------------------
 drop_puyo           :: Setting -> PlayerState -> IO Bool
 drop_puyo gs state  =
-    MND.foldM fff False fieldArray_indices
+    foldM fff False fieldArray_indices
   where
     -- ちぎり落下の適用範囲。
     fieldArray_indices
@@ -109,12 +107,11 @@ rewriteAnimation s p a anime
   | Area.isPuyo a   = renew_fieldArea s p $ Area.modifyAnime (const anime) a
   | otherwise       = return ()
 
-
 -- 落下があった列のぷよをアニメーションさせる。
 transmitAnimeLanding    :: Area.Power -> Area.Area -> Field.Position
                         -> PlayerState -> IO()
-transmitAnimeLanding 0 _     _ _    = return ()
-transmitAnimeLanding a area p state = MND.when (Area.isNoAnime area)
+transmitAnimeLanding 0 _    _ _     = return ()
+transmitAnimeLanding a area p state = when (Area.isNoAnime area)
                                         $ tAL a area p state
   where
     tAL a area p state = do

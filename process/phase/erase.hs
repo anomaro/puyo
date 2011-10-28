@@ -1,10 +1,7 @@
--- erasePhase.hs
 module Process.Phase.Erase
-    (
-    erase_puyo,
-    rewriteSpase_puyo,
-    )
-    where
+( erase_puyo
+, rewriteSpase_puyo
+) where
 
 import qualified Control.Monad      as MND
 
@@ -32,19 +29,19 @@ erase_puyo gs state =  do
   where
     f :: Bool -> Field.Position -> IO Bool
     f b p = do
-        area  <- get_fieldStateArea p state 
-        numUnion    <- if Area.isUnionCheck Nothing area p
-                         then check_union state p
-                         else return 0
-        bool    <- if numUnion < Setting.get Setting.ErasePuyo gs
-                 then return False
-                 else do
-                area <- get_fieldStateArea p state
-                erase_unionPuyo state p
-                renewScore (Score.expandUniCol numUnion (Area.color area)) state
-                return True
+        area        <- get_fieldStateArea p state 
+        numUnion    <- count $ Area.isUnionCheck Nothing area p
+        MND.when (newBool numUnion) $ erace numUnion
         off_unionCheck state p
-        return $ b || bool
+        return $ b || (newBool numUnion)
+      where
+        count False = return 0
+        count True  = check_union state p
+        newBool = (>= Setting.get Setting.ErasePuyo gs)
+        erace n = do
+            area <- get_fieldStateArea p state
+            erase_unionPuyo state p
+            renewScore (Score.expandUniCol n $ Area.color area) state
 
 -- 結合状態を調べてぷよを消滅させる。（消滅フラグが立っているエリアを空白にする）
 rewriteSpase_puyo           :: Setting.Setting -> PlayerState -> IO ()
@@ -61,7 +58,8 @@ rewriteSpase_puyo gs state  =  do
     -- 予告ぷよを算出する。
     calculateYokoku =  do
         score <- get_score state
-        let (n, newScore)  = Score.calculateYokoku score (Setting.get Setting.OjamaRate gs)
+        let (n, newScore)  = Score.calculateYokoku score
+                                (Setting.get Setting.OjamaRate gs)
         renewYokoku (Yokoku.add n) trt state
         renewScore (const newScore) state
       where

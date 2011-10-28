@@ -1,8 +1,6 @@
 module State.Player.DataType
-    (
-    PlayerState,
-    )
-    where
+( PlayerState
+) where
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 import qualified State.Player.Substance as SUB (PlayerState)

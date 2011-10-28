@@ -1,8 +1,8 @@
 module Data.Field
 where
 
-import qualified Data.Direction       as Direction
-import qualified Data.Setting          as Setting
+import qualified Data.Direction     as Direction
+import qualified Data.Setting       as Setting
 
 --------------------------------------------------------------------------------
 --  型
@@ -11,20 +11,14 @@ type Position   = (Rank, Line)
 type Rank       = Int   -- Ｙ座標
 type Line       = Int   -- Ｘ座標
 
-rank    :: Position -> Rank
-rank    =  fst
-
-line    :: Position -> Line
-line    =  snd
-
 --------------------------------------------------------------------------------
 --  名前
 -------------------------------------------------------------------------------- 
 -- 隕石ぷよのおじゃまぷよの予告段数。
-sizeYyokokuLv3  = 5         :: Rank
+rankInseki  = 5         :: Rank
 
 -- ぷよの可視範囲の最上段のフィールドＹ座標。
-topRank    = 4         :: Rank
+topRank     = 4         :: Rank
 
 -- ぷよの可視範囲外の見えない段のフィールドＹ座標。
 hidingBottomRank = 3         :: Rank

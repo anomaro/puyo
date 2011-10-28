@@ -18,7 +18,7 @@ import Data.Maybe (fromJust)
 
 import qualified Data.Number        as Number
 import qualified Data.Setting       as Setting
-import qualified Data.Field         as Field (sizeYyokokuLv3)
+import qualified Data.Field         as Field (rankInseki)
 
 --------------------------------------------------------------------------------
 --  Œ^
@@ -94,11 +94,10 @@ reset (a, Fixed b, c)    =  (a, Fixed (b + 1), c)
 --------------------------------------------------------------------------------
 -- •\Ž¦‚·‚éŽí—Þ
 view        :: Number.Puyo -> Setting.Setting -> [Kind]
-view n s    =  view' n (Setting.get Setting.FieldSizeX s) s
+view n s    =  take (Setting.get Setting.FieldSizeX s) $ view' n s
  where
-    view' 0 _ _   = []
-    view' _ 0 _   = []
-    view' n x s   = kind : view' (n - ojamaVolume kind s) (x - 1) s
+    view' 0 _   = []
+    view' n s   = kind : view' (n - ojamaVolume kind s) s
       where
         kind    = fromJust $ find ((0 <=) . (n -) . (flip ojamaVolume) s) ks
         ks      = [maxBound, pred maxBound .. minBound] :: [Kind]
@@ -109,7 +108,7 @@ view n s    =  view' n (Setting.get Setting.FieldSizeX s) s
 ojamaVolume :: Kind -> Setting.Setting -> Number.Puyo
 ojamaVolume Syo    _                     = 1
 ojamaVolume Chu    gs | rankSize gs > 1  = rankSize gs
-ojamaVolume Inseki gs | rankSize gs > 1  = ojamaVolume Chu gs * Field.sizeYyokokuLv3
+ojamaVolume Inseki gs | rankSize gs > 1  = ojamaVolume Chu gs * Field.rankInseki
 ojamaVolume Hoshi  gs | rankSize gs > 1  = ojamaVolume Inseki gs * rankSize gs
 ojamaVolume k      gs | rankSize gs > 1  = ojamaVolume (pred k) gs * 2
 ojamaVolume k      _                     = fromEnum k + 1

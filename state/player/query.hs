@@ -1,45 +1,43 @@
 module State.Player.Query
-    (
     -- プレーヤー識別子取得。
-    get_playerIdentity,
-    
+( get_playerIdentity
+
     -- ゲーム状態取得
-    get_gamePhase,
+, get_gamePhase
     
     -- フィールドの状態取得
-    get_fieldStateArea,
-    is_neighborSpace,
+, get_fieldStateArea
+, is_neighborSpace
     
     -- 操作ぷよの状態取得
-    get_PlayerPuyoExistent,
-    get_PlayerPuyoColors,
-    get_PlayerPuyoPosition,
-    get_PlayerPuyoDirection,
-    get_PlayerPuyoFallTime,
-    get_PlayerPuyoRotateTime,
-    get_PlayerPuyoQuickTurnFlag,
+, get_PlayerPuyoExistent
+, get_PlayerPuyoColors
+, get_PlayerPuyoPosition
+, get_PlayerPuyoDirection
+, get_PlayerPuyoFallTime
+, get_PlayerPuyoRotateTime
+, get_PlayerPuyoQuickTurnFlag
     
     -- ネクストぷよの色取得
-    get_nextPuyoColors,
+, get_nextPuyoColors
     
     -- 得点取得
-    get_score,
+, get_score
     
     -- 予告ぷよ取得
-    get_fallOjamaPuyo,
-    get_yokoku,
+, get_fallOjamaPuyo
+, get_yokoku
     
     -- 敗北フラグ
-    get_whoWins,
+, get_whoWins
     
     -- 状態生成
-    create_playerstate,
-    create_nextPuyoState,
-    copy_nextPuyoState,
-    create_yokokuState,
-    create_loseFlagState,
-    )
-    where
+, create_playerstate
+, create_nextPuyoState
+, copy_nextPuyoState
+, create_yokokuState
+, create_loseFlagState
+) where
 
 import qualified State.Player.Substance as P'
 
@@ -65,9 +63,6 @@ import qualified Data.Phase           as Phase (Game, start)
 (<$<) :: Functor f => (a -> b) -> (c -> f a) -> (c -> f b)
 f <$< g =  fmap f . g
 infixr 1 <$<
-
-readField   :: (AIO.MArray a e m, AIO.Ix i) => i -> a i e -> m e
-readField   =  flip AIO.readArray 
 
 --------------------------------------------------------------------------------
 --  プレイヤー状態の内容を外部モジュールに伝える。
@@ -124,12 +119,12 @@ get_score       =  IORF.readIORef . P'.score
 --------------------------------------------------------------------------------
 -- 指定したエリアのフィールドのオブジェクトの種類を伝える。
 get_fieldStateArea      :: Field.Position -> P'.PlayerState -> IO Area.Area
-get_fieldStateArea p    =  readField p . P'.field
+get_fieldStateArea p    =  (flip AIO.readArray) p . P'.field
                              
 -- 指定した方向に隣接するエリアのオブジェクトが、空白かどうか判定。
 is_neighborSpace :: Field.Position -> Direction.Area -> P'.PlayerState -> IO Bool
 is_neighborSpace p d =
-    Area.isSpace <$< readField (Field.neighbor d p) . P'.field
+    Area.isSpace <$< (flip AIO.readArray) (Field.neighbor d p) . P'.field
 
 --------------------------------------------------------------------------------
 --  操作ぷよの状態取得
@@ -189,36 +184,14 @@ create_playerstate pI gs stateN stateY stateL   =  do
     create_ppuyostate   =  IORF.newIORef P'.NonExistent
     -- フィールド状態の可変配列を作成する。
     create_fieldstate :: IO P'.FieldState
-    create_fieldstate = 
-        AIO.newArray ((1, 1), (Field.sizeRank gs, Field.sizeLine gs)) Area.initialSnd
-        >>= \stateF -> build_wall stateF    -- 壁オブジェクトを作る。
-        >> return stateF
+    create_fieldstate =  do
+        stateF  <- AIO.newArray ((1, 1), (Field.sizeRank gs, Field.sizeLine gs))
+                                Area.initialFst
+        mapM_ (\p -> AIO.writeArray stateF p Area.initialSnd) spacePositions
+        return stateF
       where
-        build_wall          :: P'.FieldState -> IO()
-        build_wall stateF   =  do  
-            writeStroke_field stateF walls (fieldArray_indicesY $ Field.sizeRank gs)
-            writeStroke_field stateF walls (fieldArray_indicesX $ Field.sizeLine gs)
-            writeStroke_field stateF walls (fieldArray_indicesX 1)
-          where
-            walls = repeat Area.initialFst
-            -- フィールドの、リストから得た座標を特定のオブジェクトに書き換える。
-            writeStroke_field :: P'.FieldState -> [Area.Area] -> [Field.Position] -> IO()
-            writeStroke_field _      _      []      = return ()
-            writeStroke_field _      []     _       = return ()
-            writeStroke_field stateF (a:as) (p:ps)  =
-                AIO.writeArray stateF p a
-                >> writeStroke_field stateF as ps
-            -- フィールド状態配列の、Y座標を指定した要素のリスト。（X座標は操作ぷよの可視範囲）
-            fieldArray_indicesY :: Field.Rank -> [Field.Position]
-            fieldArray_indicesY y   
-             | 1 <= y && y <= Field.sizeRank gs  = [(y, x) | x <- [2..Field.sizeLine gs - 1] ]
-             | otherwise                         = []
-            -- フィールド状態配列の、X座標を指定した要素のリスト。
-            fieldArray_indicesX :: Field.Rank -> [Field.Position]
-            fieldArray_indicesX x   
-             | 1 <= x && x <= Field.sizeLine gs  = [(y, x) | y <- [1..Field.sizeRank gs] ]
-             | otherwise                         = []
-
+        spacePositions = [(r, l)| r <- [1..Field.sizeRank gs - 1]
+                                , l <- [2..Field.sizeLine gs - 1]]
 
 -- ネクストぷよを初期化。
 create_nextPuyoState        :: Setting.Setting -> IO P'.NextPuyoState
@@ -231,7 +204,6 @@ create_nextPuyoState  gs    =  do
 -- ネクストぷよをコピーする。（２Ｐ側のネクストぷよ状態を作るときに使う。）
 copy_nextPuyoState :: P'.NextPuyoState -> IO P'.NextPuyoState
 copy_nextPuyoState =  IORF.newIORef <=< IORF.readIORef  
-
 
 -- 予告ぷよを初期化。
 create_yokokuState :: IO P'.YokokuState

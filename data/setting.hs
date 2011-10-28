@@ -2,18 +2,14 @@ module Data.Setting
 ( Setting
 , Item (..)
 , Value
-
 , get
 , getColorPattern
 , renew
 , initial
-
 , flag_quickTrun
 , flag_oturi
 ) where
 
--- ゲーム環境の設定等を決める値
--- 色数・ぷよの消える数・おじゃまぷよレートなどなど。。。
 import qualified Data.Vector.Unboxed    as VCU
 
 import qualified Data.Number          as Number

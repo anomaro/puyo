@@ -1,7 +1,6 @@
 module Data.Direction
 ( Area(..)
 , Rotation(..)
-
 , areas
 , inversion
 , compose

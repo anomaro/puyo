@@ -1,30 +1,15 @@
 module State.Player.Overwriting
-    (   
-    -- ゲーム状態遷移更新
-    shift_gamePhase,
-    
-    -- ネクストぷよ状態更新
-    eat_nextPuyo,
-    
-    -- フィールド状態更新
-    renew_fieldArea,
-    renew_animationType,
-    
-    -- 配ぷよ状態更新
-    renew_playerPuyo,
-    renew_playerPuyo',
-    remove_playerPuyo,
-    
-    -- 得点更新
-    renewScore,
-
-    -- 予告ぷよ更新
-    renewYokoku,
-    
-    -- 敗北フラグ更新
-    renewLoseFlag,
-    )
-    where
+( shift_gamePhase
+, eat_nextPuyo
+, renew_fieldArea
+, renew_animationType
+, renew_playerPuyo
+, renew_playerPuyo'
+, remove_playerPuyo
+, renewScore
+, renewYokoku
+, renewLoseFlag
+) where
 
 import qualified State.Player.Substance as P'
 import State.Player.Query
@@ -133,7 +118,7 @@ renew_playerPuyo'   :: P'.PlayerState
                     -> Bool                 -- クイックターンフラグ
                     -> IO ()
 renew_playerPuyo' state c p d tf tt qf  =
-    flip IORF.writeIORef (P'.PlayerPuyoInfo c p d tf tt qf) $ P'.playerPuyo state
+  flip IORF.writeIORef (P'.PlayerPuyoInfo c p d tf tt qf) $ P'.playerPuyo state
 
 -- 完全書き換え
 remove_playerPuyo :: P'.PlayerState -> IO()

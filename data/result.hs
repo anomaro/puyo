@@ -5,8 +5,6 @@ module Data.Result
 , addWin
 ) where
 
-import Data.Graph.Inductive.Query.Monad
-
 import qualified Data.PlayerIdentity  as Identity
 
 --------------------------------------------------------------------------------
@@ -15,7 +13,6 @@ import qualified Data.PlayerIdentity  as Identity
 data Collection = Collection 
                 { wins  :: Wins
                 }
---data GameDataCollection = GameData Wins
 
 -- 勝利数 （１プレイヤー, ２プレイヤー）
 type Wins       = (NumOfWin, NumOfWin)

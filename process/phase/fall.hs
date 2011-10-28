@@ -4,7 +4,7 @@ module Process.Phase.Fall
 ) where
 
 import Data.List (delete)
-import Control.Monad
+import Control.Monad (when)
 
 import State.Player.DataType    as P
 import State.Player.Query (
@@ -16,13 +16,13 @@ import State.Player.Overwriting (
     renew_fieldArea,
     renewYokoku,
     )
-import qualified Data.PlayerIdentity  as Identity (against, territory)
-import qualified Data.Area            as Area
-import qualified Data.Direction       as Direction
-import qualified Data.Field           as Field
-import qualified Data.Random          as Random (run)
-import qualified Data.Yokoku          as Yokoku
-import qualified Data.Setting          as Setting
+import qualified Data.PlayerIdentity    as Identity (against, territory)
+import qualified Data.Area              as Area
+import qualified Data.Direction         as Direction
+import qualified Data.Field             as Field
+import qualified Data.Random            as Random (run)
+import qualified Data.Yokoku            as Yokoku
+import qualified Data.Setting           as Setting
 
 --------------------------------------------------------------------------------
 --  

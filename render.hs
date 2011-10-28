@@ -2,7 +2,6 @@ module Render
 ( render
 ) where
 
-
 import qualified Render.Game     as R
 import qualified Stage          as S
 import qualified Render.Configuration  as C

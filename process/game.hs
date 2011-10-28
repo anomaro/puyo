@@ -1,11 +1,9 @@
--- file: gamePhase.hs
 module Process.Game
-    (
-    convert_gamePhase,
-    )
-    where
-import Data.Maybe       (isJust)
-import Control.Monad    (when)
+( convert_gamePhase
+) where
+
+import Data.Maybe (isJust)
+import Control.Monad (when)
 
 import qualified Data.PlayerIdentity  as Identity
 import qualified Data.Direction       as Direction
@@ -32,7 +30,6 @@ import State.Player.Overwriting (
     shift_gamePhase,
     renewScore,
     )
-
 
 wrapMaybe       :: Bool -> a -> Maybe a
 wrapMaybe p x   =  if p then Just x else Nothing
@@ -66,9 +63,7 @@ convert_gamePhase state stateB gs =
 --  ゲーム終了判定 （ゲーム終了ならTrue）
 --------------------------------------------------------------------------------
 check_gameEnd       :: PlayerState -> IO Bool
-check_gameEnd state =  do
-    winPlayer   <- get_whoWins  state
-    return $ isJust winPlayer
+check_gameEnd st =  isJust `fmap` get_whoWins st
 
 --------------------------------------------------------------------------------
 --  AnimationPhase Time GamePhase   アニメーション硬直

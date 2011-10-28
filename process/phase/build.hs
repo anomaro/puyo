@@ -1,4 +1,3 @@
--- buildPhase.hs
 module Process.Phase.Build
 ( build_playerPuyo
 , checkLose
@@ -35,12 +34,7 @@ build_playerPuyo gs state   =  do
     renewScore Score.refresh state
     color   <- pick_nextPuyoColor state
     eat_nextPuyo state 2
-    renew_playerPuyo' state color
-                            build_Area
-                            Direction.Up
-                            0
-                            0
-                            False
+    renew_playerPuyo' state color build_Area Direction.Up 0 0 False
   where
     -- ‚Õ‚æ¶¬“_
     build_Area  = Field.neighbor Direction.Up $ Field.critical gs

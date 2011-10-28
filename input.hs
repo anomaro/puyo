@@ -1,26 +1,19 @@
--- file: input.hs
 module Input
-    (
-    ButtonState,
-    
-    Button,
-    up_button,
-    right_button,
-    down_button,
-    left_button,
-    one_button,
-    two_button,
-    read_buttonState,
-    
-    create_buttonState,
-    putIn_key,
-    putOut_key,
-    renew_buttonState,
-    
-    
-    testButtonList,
-    )
-    where
+( ButtonState
+, Button
+, up_button
+, right_button
+, down_button
+, left_button
+, one_button
+, two_button
+, read_buttonState
+, create_buttonState
+, putIn_key
+, putOut_key
+, renew_buttonState
+, testButtonList
+)  where
 
 import qualified Control.Monad      as MND
 import qualified Data.IORef         as IORF

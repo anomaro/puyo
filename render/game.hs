@@ -80,9 +80,14 @@ field_pointX :: Identity.Territory -> Setting.Setting -> Double
 field_pointX trt gs = Identity.pick trt (l, r)
   where
     l = - 1 + unitAreaX gs
-    r = 1 - unitAreaX gs - (unitAreaX gs * fromIntegral (Field.sizeLine gs - 1)) * 2
+    r = 1 - unitAreaX gs - (renderPositionX gs $ Field.sizeLine gs)
 
---(unitAreaX gs * (x' - 1) ) * 2
+-- フィールド座標を実際の画面の座標位置に変換。
+renderPositionX         :: Setting.Setting -> Field.Line -> Double
+renderPositionX gs x    =  (unitAreaX gs * fromIntegral (x - 1) ) * 2
+
+renderPositionY         :: Setting.Setting -> Field.Rank -> Double
+renderPositionY gs y    =  (unitAreaY gs * fromIntegral (y - 1) ) * 2
 
 --------------------------------------------------------------------------------
 --  勝利数描画   
@@ -93,9 +98,9 @@ render_wins gs state gdc    =  do
     GLUT.color (GLUT.Color3 1.0 1.0 1.0 :: GLUT.Color3 Double)
     render_gameobject' (GLUT.Vector3 xm ym 0) scale scale 0 objWins
   where
+    xm = field_pointX trt gs + unitAreaX gs
+    ym = field_pointY gs - unitAreaY gs * 2 * (fromIntegral $ Field.sizeRank gs)
     trt = Identity.territory $ get_playerIdentity state
-    xm  = field_pointX trt gs + unitAreaX gs
-    ym  = field_pointY gs - unitAreaY gs * 2 * (fromIntegral $ Field.sizeRank gs)
     scale       = 0.001
     objWins     = GLUT.renderString GLUT.Roman $ show wins
       where
@@ -123,11 +128,12 @@ render_score gs state   =  do
     GLUT.color (GLUT.Color3 1.0 1.0 1.0 :: GLUT.Color3 Double)
     render_gameobject' (GLUT.Vector3 xm ym 0) scale scale 0 objScore
   where
-    xm  = field_pointX (Identity.territory $ get_playerIdentity state) gs + unitAreaX gs
-    ym  = field_pointY gs - unitAreaY gs * 2 * (fromIntegral $ Field.sizeRank gs)
+    xm  = field_pointX trt gs + unitAreaX gs
+    ym  = field_pointY gs - unitAreaY gs * 2 * fromIntegral (Field.sizeRank gs)
+    trt = Identity.territory $ get_playerIdentity state
     scale       = 0.001
     objScore    = do
-        score <- get_score state >>= return . Score.display
+        score <- Score.display `fmap` get_score state
         GLUT.renderString GLUT.Roman $ show score
     
 --------------------------------------------------------------------------------
@@ -138,7 +144,6 @@ render_fallPoint gs state   =  do
     (cb, cm)    <- get_PlayerPuyoColors     state
     pos         <- get_PlayerPuyoPosition   state
     d           <- get_PlayerPuyoDirection  state
-    
     bottomPosB  <- bottomArea pos
     bottomPosM  <- if d == Direction.Up || d == Direction.Down
                     then return bottomPosB
@@ -151,7 +156,6 @@ render_fallPoint gs state   =  do
                                 then Field.neighbor Direction.Up bottomPosM
                                 else bottomPosM         
                                ) $ objFallPoint cm
-    return ()
   where
     -- その列の接地エリア
     bottomArea :: Field.Position -> IO Field.Position
@@ -172,19 +176,17 @@ render_nextPuyo gs state    =  do
     render_nextPuyo' :: [Color] -> Number.PuyoPair -> IO()
     render_nextPuyo' _          0   = return ()
     render_nextPuyo' (cb:cm:cs) n   = do
-        let trt = Identity.territory $ get_playerIdentity state
-            n'  = (Setting.get Setting.NextPuyoView gs - n) * 2
-            y   = Field.topRank + n'
-            x   = if trt == Identity.Left 
-                    then Field.sizeLine gs + 1
-                    else 0
-            mx  = if trt == Identity.Left 
-                    then unitAreaX gs / 2 * fromIntegral (n'- 2)
-                    else negate $ unitAreaX gs / 2 * fromIntegral (n'- 2)
         render_fieldObject' gs trt (y  , x) mx 0 1 1 0 $ objPuyo cm
         render_fieldObject' gs trt (y+1, x) mx 0 1 1 0 $ objPuyo cb
         render_nextPuyo' cs $ n - 1
-
+      where trt = Identity.territory $ get_playerIdentity state
+            n'  = (Setting.get Setting.NextPuyoView gs - n) * 2
+            y   = Field.topRank + n'
+            x   = if trt == Identity.Left  then Field.sizeLine gs + 1  else 0
+            mx  = if trt == Identity.Left 
+                    then unitAreaX gs / 2 * fromIntegral (n'- 2)
+                    else negate $ unitAreaX gs / 2 * fromIntegral (n'- 2)
+        
 --------------------------------------------------------------------------------
 --  操作ぷよ描画
 --------------------------------------------------------------------------------
@@ -195,38 +197,35 @@ render_playerPuyo gs state  =  do
     d           <- get_PlayerPuyoDirection  state
     fallTime    <- get_PlayerPuyoFallTime   state
     rotateTime  <- get_PlayerPuyoRotateTime state
-    
     render_fieldObject' (y, x) fallTime d rotateTime color
   where
     render_fieldObject' :: Field.Position -> Time.Time
                            -> Direction.Area -> Time.Time -> (Color, Color)
                            -> IO()
     render_fieldObject' (y, x) fallTime d rotateTime (cb, cm) = do  
-        let fallTime'   = Setting.get Setting.FallTime gs
-            (y', x')    = (fromIntegral y, fromIntegral x)
-            trt         = Identity.territory $ get_playerIdentity state
-            posY    = field_pointY     gs - (unitAreaY gs * (y' - 1) ) * 2
-            posX    = field_pointX trt gs + (unitAreaX gs * (x' - 1) ) * 2
-            gy  = 2 * unitAreaY gs * ( fromIntegral (fallTime' - fallTime)
-                                    / fromIntegral fallTime' - 1)
-            (rY, rX) = rotateGap gs d rotateTime
-            sc  = reviseViewSize gs
         render_gameobject' (GLUT.Vector3 posX (posY - gy) 0) 
                             sc sc 0 objControlPuyoBack
         render_gameobject' (GLUT.Vector3 (posX + rX) (posY - gy + rY) 0) 
                             sc sc 0 $ objPuyo cm
         render_gameobject' (GLUT.Vector3 posX (posY - gy) 0) 
                             sc sc 0 $ objPuyo cb
+      where
+        trt         = Identity.territory $ get_playerIdentity state
+        posY    = field_pointY     gs - renderPositionY gs y
+        posX    = field_pointX trt gs + renderPositionX gs x
+        fallTime'   = Setting.get Setting.FallTime gs
+        gy  = 2 * unitAreaY gs * ( fromIntegral (fallTime' - fallTime)
+                                / fromIntegral fallTime' - 1)
+        (rY, rX) = rotateGap gs d rotateTime
+        sc  = reviseViewSize gs
 
 -- 回転の描画のずれの数値。
 rotateGap :: Setting.Setting -> Direction.Area -> Time.Time -> (Double, Double)
-rotateGap gs direction rotateTime  = 
-    let r = pi * fromIntegral rotateTime / (2 * fromIntegral Time.animeRotate)
-    in
-    (\(fy, fx) -> (2 * unitAreaY gs * fy r, 2 * unitAreaX gs * fx r) ) 
-        (directionalFunctions direction)
+rotateGap gs d rotateTime  = (2 * unitAreaY gs * fy r, 2 * unitAreaX gs * fx r)
+  where
+    r = pi * fromIntegral rotateTime / (2 * fromIntegral Time.animeRotate)
+    (fy, fx) = (directionalFunctions d)
       where
-        directionalFunctions :: Floating a => Direction.Area -> ((a->a), (a->a))
         directionalFunctions Direction.Up      = (cos, negate.sin)
         directionalFunctions Direction.Right   = (sin, cos)
         directionalFunctions Direction.Down    = (negate.cos, sin)
@@ -247,25 +246,25 @@ render_backfield gs state   =  mapM_ f $ Field.arrayIndices gs
 -- フィールドを描画
 render_field            :: Setting.Setting -> PlayerState -> IO()
 render_field gs state   =  mapM_ f $ Field.arrayIndices gs
-  where
-    f p =  renew_animationType state p         -- アニメーション状態の更新。 
-           >> (matching =<< get_fieldStateArea p state)
-      where
-        matching a
-          | Area.is_colorPuyo a = renderColorPuyoLink a (Area.anime a)
-          | Area.isPuyo a   = render_fieldPuyo gs trt (Area.anime a) p objOjamaPuyo
-          | otherwise       = return ()
-        trt = Identity.territory $ get_playerIdentity state
-        renderColorPuyoLink area animeTime = 
-            neighborSameColorPuyo area p state
-            >>= render_fieldPuyo gs trt animeTime p . objPuyo' (Area.color area)
+ where
+  f p =  renew_animationType state p         -- アニメーション状態の更新。 
+         >> (matching =<< get_fieldStateArea p state)
+   where
+    matching a
+      | Area.is_colorPuyo a = renderColorPuyoLink a (Area.anime a)
+      | Area.isPuyo a   = render_fieldPuyo gs trt (Area.anime a) p objOjamaPuyo
+      | otherwise       = return ()
+    trt = Identity.territory $ get_playerIdentity state
+    renderColorPuyoLink area animeTime = 
+        neighborSameColorPuyo area p state
+        >>= render_fieldPuyo gs trt animeTime p . objPuyo' (Area.color area)
 
 -- 隣接したエリアを調べて、同じ色のぷよがあった方向のリストを得る。
 neighborSameColorPuyo           :: Area.Area -> Field.Position -> PlayerState 
                                 -> IO[Direction.Area]
 neighborSameColorPuyo area p state
-  | not (Area.isLink area) = return []
-  | otherwise              = foldM ffff [] Direction.areas
+  | Area.isLink area    = foldM ffff [] Direction.areas
+  | otherwise           = return []
   where
     ffff    :: [Direction.Area] -> Direction.Area -> IO[Direction.Area]
     ffff acc d  =  do
@@ -294,16 +293,14 @@ render_fieldObject  :: Setting.Setting -> Identity.Territory -> Field.Position
                     -> GameObject -> IO()
 render_fieldObject gs trt p obj = render_fieldObject' gs trt p 0 0 1 1 0 obj
 
-
 render_fieldObject' :: Setting.Setting -> Identity.Territory -> Field.Position
                     -> GLUT.GLdouble -> GLUT.GLdouble
                     -> GLUT.GLdouble -> GLUT.GLdouble
                     -> GLUT.GLdouble -> GameObject -> IO()
-render_fieldObject' gs trt (y, x) mx my sx sy r obj = do
-    let (y', x') = (fromIntegral y, fromIntegral x)
-        posY = field_pointY     gs - (unitAreaY gs * (y' - 1) ) * 2
-        posX = field_pointX trt gs + (unitAreaX gs * (x' - 1) ) * 2
+render_fieldObject' gs trt (y, x) mx my sx sy r obj =
+    render_gameobject' (GLUT.Vector3 (posX + mx) (posY + my') 0) sx' sy' r obj
+  where posY = field_pointY     gs - renderPositionY gs y
+        posX = field_pointX trt gs + renderPositionX gs x
         sx'  = sx * reviseViewSize gs
         sy'  = sy * reviseViewSize gs
         my'  = my * unitAreaY gs
-    render_gameobject' (GLUT.Vector3 (posX + mx) (posY + my') 0) sx' sy' r obj

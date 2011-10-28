@@ -1,5 +1,5 @@
 module Process.Configuration
-    where
+where
 
 import Data.Maybe
 

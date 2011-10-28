@@ -1,9 +1,6 @@
--- main.hs
 module Main
-    (
-    main
-    )
-    where
+( main
+) where
 
 import Control.Applicative
 import qualified Graphics.UI.GLUT   as GLUT 
@@ -24,8 +21,8 @@ import qualified Data.Result   as D
 import qualified State.Player.DataType  as P
 import qualified State.Player.Query     as Q
 import qualified Process.Configuration  as C
-import qualified Data.Time            as Time (frameRate)
-import qualified Data.Setting          as Setting (initial)
+import qualified Data.Time              as Time (frameRate)
+import qualified Data.Setting           as Setting (initial)
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
