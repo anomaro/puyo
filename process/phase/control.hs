@@ -5,7 +5,7 @@ module Process.Phase.Control
 , rotate_puyo
 ) where
 
-import qualified Control.Monad      as MND
+import Control.Monad (when)
 
 import State.Player.DataType
 import State.Player.Query   (
@@ -59,13 +59,12 @@ fall_puyo state gs  =  reset_fallTime >> move_puyo state Direction.Down
     reset_fallTime :: IO()
     reset_fallTime =  do
         b   <- get_PlayerPuyoExistent state
-        MND.when b $
-            renew_playerPuyo state Nothing
-                                   Nothing
-                                   Nothing
-                                   (Just $ Setting.get Setting.FallTime gs)
-                                   Nothing
-                                   Nothing
+        when b $ renew_playerPuyo state Nothing
+                                        Nothing
+                                        Nothing
+                                        (Just $ Setting.get Setting.FallTime gs)
+                                        Nothing
+                                        Nothing
 
 --------------------------------------------------------------------------------
 -- 操作ぷよの移動。（移動した場合はTrueを返す。）
@@ -81,8 +80,7 @@ move_puyo state dm  =  do
         pos     <- get_PlayerPuyoPosition state
         if move         -- 移動判定 --
           then move_neighbor pos
-          else MND.when (dm == Direction.Down)   -- 着地判定 --
-                    $ (shift_gamePhase state Phase.Drop) >> land_puyo
+          else landingDetection
         return move
       where
         move_neighbor p = renew_playerPuyo state Nothing
@@ -91,13 +89,16 @@ move_puyo state dm  =  do
                                                  Nothing
                                                  Nothing
                                                  Nothing
-        land_puyo   = renew_playerPuyo state Nothing
-                                             Nothing
-                                             Nothing
-                                             (Just 0)
-                                             (Just 0)
-                                             (Just False)
-
+        landingDetection    = when (dm == Direction.Down)
+                               $ (shift_gamePhase state Phase.Drop) >> land_puyo
+          where
+            land_puyo   = renew_playerPuyo state Nothing
+                                                 Nothing
+                                                 Nothing
+                                                 (Just 0)
+                                                 (Just 0)
+                                                 (Just False)
+        
 --------------------------------------------------------------------------------
 -- 操作ぷよの回転。（移動した場合はTrueを返す。 ※回転した場合ではない。）
 --------------------------------------------------------------------------------

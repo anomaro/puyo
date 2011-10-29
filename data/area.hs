@@ -147,7 +147,7 @@ defaultState    :: (UnionCheck -> AnimationType -> Area) -> Area
 defaultState    =  ($ Normal) . ($ NotYet)
 
 --------------------------------------------------------------------------------
---  特殊用途パターンマッチング
+--  特殊用途
 --------------------------------------------------------------------------------
 isNoAnime                                   :: Area -> Bool
 isNoAnime       (Puyo _ _ Normal)           =  True
@@ -159,17 +159,10 @@ isDroppingAnime (Puyo _ _ (Dropping _ ))    =  True
 isDroppingAnime (Ojama  _ (Dropping _ ))    =  True
 isDroppingAnime _                           =  False
 
-
---------------------------------------------------------------------------------
---  特殊用途名前
---------------------------------------------------------------------------------
 eracingPuyo             :: Maybe Color -> Area
 eracingPuyo Nothing     =  Ojama  EraseFlag animeStartErasing
 eracingPuyo (Just c)    =  Puyo c EraseFlag animeStartErasing
 
---------------------------------------------------------------------------------
---  
---------------------------------------------------------------------------------
 isUnionCheck            :: Maybe Color -> Area -> Field.Position -> Bool
 isUnionCheck            =  isTarget NotYet
 

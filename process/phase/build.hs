@@ -3,7 +3,7 @@ module Process.Phase.Build
 , checkLose
 ) where
 
-import Control.Monad
+import Control.Monad (when)
 
 import State.Player.DataType    as P
 import State.Player.Query   (

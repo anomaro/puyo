@@ -3,7 +3,7 @@ module Process.Phase.Erase
 , rewriteSpase_puyo
 ) where
 
-import qualified Control.Monad      as MND
+import Control.Monad (foldM, when, mapM_)
 
 import State.Player.DataType
 import State.Player.Query
@@ -25,13 +25,13 @@ import qualified Data.Setting          as Setting
 erase_puyo          :: Setting.Setting -> PlayerState -> IO Bool
 erase_puyo gs state =  do
     renewScore Score.expandChain state
-    MND.foldM f False $ Field.arrayIndices gs
+    foldM f False $ Field.arrayIndices gs
   where
     f :: Bool -> Field.Position -> IO Bool
     f b p = do
         area        <- get_fieldStateArea p state 
         numUnion    <- count $ Area.isUnionCheck Nothing area p
-        MND.when (newBool numUnion) $ erace numUnion
+        when (newBool numUnion) $ erace numUnion
         off_unionCheck state p
         return $ b || (newBool numUnion)
       where
@@ -46,15 +46,14 @@ erase_puyo gs state =  do
 -- 結合状態を調べてぷよを消滅させる。（消滅フラグが立っているエリアを空白にする）
 rewriteSpase_puyo           :: Setting.Setting -> PlayerState -> IO ()
 rewriteSpase_puyo gs state  =  do
-    MND.mapM_ f $ Field.arrayIndices gs
+    mapM_ f $ Field.arrayIndices gs
     renewScore Score.calculate state
     calculateYokoku
   where
     f :: Field.Position -> IO()
     f p = do
         area    <- get_fieldStateArea p state
-        MND.when (Area.isReplacedSpace area p)
-                 $ renew_fieldArea state p standard
+        when (Area.isReplacedSpace area p) $ renew_fieldArea state p standard
     -- 予告ぷよを算出する。
     calculateYokoku =  do
         score <- get_score state
@@ -70,7 +69,7 @@ rewriteSpase_puyo gs state  =  do
 off_unionCheck :: PlayerState -> Field.Position -> IO()
 off_unionCheck state p = do
     area <- get_fieldStateArea p state
-    MND.when (Area.isUnionCheckFinished Nothing area p)
+    when (Area.isUnionCheckFinished Nothing area p)
         $ renew_fieldArea state p $ Area.modifyUnion (const standard) area
 
 -- 結合しているぷよを消滅させる。（消滅フラグを立てる。）
@@ -83,9 +82,9 @@ erase_unionPuyo state p = do
     fff :: Color -> Direction.Area -> IO()
     fff color d = do
         area    <- get_fieldStateArea p' state
-        MND.when (Area.isEraseOjamaPuyo area)   $ eraseOjamaPuyo  state p'
-        MND.when (Area.isUnionCheckFinished (Just color) area p') 
-                                                $ erase_unionPuyo state p'
+        when (Area.isEraseOjamaPuyo area) $ eraseOjamaPuyo  state p'
+        when (Area.isUnionCheckFinished (Just color) area p') 
+                                          $ erase_unionPuyo state p'
       where
         p'  = Field.neighbor d p
         -- おじゃまぷよを消滅させる。（消滅フラグを立てる。）
@@ -97,7 +96,7 @@ check_union :: PlayerState -> Field.Position -> IO Number.Union
 check_union state p    = do
     area <- get_fieldStateArea p state
     renew_fieldArea state p $ Area.unionCheckCompletion area
-    MND.foldM (fff $ Area.color area) 1 Direction.areas
+    foldM (fff $ Area.color area) 1 Direction.areas
   where
     fff :: Color -> Number.Union -> Direction.Area -> IO Number.Union
     fff color n d = do

@@ -45,13 +45,6 @@ newtype Fall a = Fall a
 newtype Fixed  a = Fixed  a
 newtype Progress a = Progress a
 
-instance Functor Fall  where
-    fmap f (Fall n)  = Fall (f n)
-instance Functor Fixed   where
-    fmap f (Fixed  n)  = Fixed  (f n)
-instance Functor Progress  where
-    fmap f (Progress n)  = Progress (f n)
-
 --------------------------------------------------------------------------------
 --  –¼‘O
 --------------------------------------------------------------------------------
@@ -63,15 +56,12 @@ insekiVolume gs = ojamaVolume Inseki gs
 --------------------------------------------------------------------------------
 --  ŠÖ”
 --------------------------------------------------------------------------------
--- ŽÀÛ‚É~‚é”
 actual  :: Shelf -> Number.Puyo
 actual (Fall n, _, _)    = n
 
--- ‡Œv
 total :: Shelf -> Number.Puyo
 total (Fall n1, Fixed n2, Progress n3) = n1 + n2 + n3
 
--- ‘JˆÚ
 fixed :: Shelf -> Shelf
 fixed (n, Fixed n2, Progress n3)    = (n, Fixed $ n2 + n3, Progress 0)
 
@@ -89,10 +79,6 @@ exhale n (Fall a, b, c) = (Fall (a - n), b, c)
 reset :: Shelf -> Shelf
 reset (a, Fixed b, c)    =  (a, Fixed (b + 1), c)
 
---------------------------------------------------------------------------------
---  Ží—Þ
---------------------------------------------------------------------------------
--- •\Ž¦‚·‚éŽí—Þ
 view        :: Number.Puyo -> Setting.Setting -> [Kind]
 view n s    =  take (Setting.get Setting.FieldSizeX s) $ view' n s
  where
@@ -102,9 +88,6 @@ view n s    =  take (Setting.get Setting.FieldSizeX s) $ view' n s
         kind    = fromJust $ find ((0 <=) . (n -) . (flip ojamaVolume) s) ks
         ks      = [maxBound, pred maxBound .. minBound] :: [Kind]
 
---------------------------------------------------------------------------------
---  —Ê
---------------------------------------------------------------------------------
 ojamaVolume :: Kind -> Setting.Setting -> Number.Puyo
 ojamaVolume Syo    _                     = 1
 ojamaVolume Chu    gs | rankSize gs > 1  = rankSize gs
